@@ -11,7 +11,7 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
-import { notFoundImage } from "../assets";
+import { notFoundImage, trophyImage } from "../assets";
 
 import { SyncedProductsList } from "../components";
 
@@ -20,7 +20,7 @@ export default function HomePage() {
 
     // Temporary until we start reading the actual products.
     const loading = false;
-    /* const exampleProducts = [
+    const exampleProducts = [
         {
             image: trophyImage,
             title: "Product 1",
@@ -39,8 +39,8 @@ export default function HomePage() {
             inventory: 15,
             updated: new Date(),
         }
-    ]; */
-    const exampleProducts = [];
+    ];
+    //const exampleProducts = [];
 
     // Page contents
     const loadingMarkup = loading &&
