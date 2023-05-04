@@ -1,7 +1,7 @@
 import { useNavigate } from "@shopify/app-bridge-react";
 
 import {
-    Card,
+    LegacyCard,
     Page,
     Layout,
     Text,
@@ -44,12 +44,12 @@ export default function HomePage() {
 
     // Page contents
     const loadingMarkup = loading &&
-        <Card sectioned>
+        <LegacyCard sectioned>
             <SkeletonBodyText />
-        </Card>;
+        </LegacyCard>;
 
     const emptyMarkup = !loading && !exampleProducts?.length &&
-        <Card sectioned>
+        <LegacyCard sectioned>
             <EmptyState
                 heading="No synced products"
                 action={{
@@ -60,7 +60,7 @@ export default function HomePage() {
             >
                 <p>Click the button to start syncing data between products.</p>
             </EmptyState>
-        </Card>;
+        </LegacyCard>;
 
     const tableMarkup = !loading && exampleProducts?.length ? 
         <SyncedProductsList 

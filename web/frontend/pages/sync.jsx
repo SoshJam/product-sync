@@ -2,8 +2,6 @@ import { useNavigate } from "@shopify/app-bridge-react";
 
 import {
     Page,
-    Layout,
-    Card
 } from "@shopify/polaris";
 
 import { TitleBar } from "@shopify/app-bridge-react";

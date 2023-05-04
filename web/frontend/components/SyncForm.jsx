@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react"; 
 import {
     Layout,
-    Card,
+    LegacyCard,
     Text,
     Button,
     Thumbnail,
@@ -60,7 +60,7 @@ export function SyncForm() {
     return (
         <>
         <Layout sectioned>
-                <Card
+                <LegacyCard
                     sectioned
                     title="Product"
                     actions={selectedProduct && [
@@ -113,7 +113,7 @@ export function SyncForm() {
                     ) : (
                         <Button primary onClick={togglePicker}>Select Product</Button>
                     )}
-                </Card>
+                </LegacyCard>
             </Layout>
             <PageActions
                 primaryAction={{
