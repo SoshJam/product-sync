@@ -1,20 +1,17 @@
 import { useNavigate } from "@shopify/app-bridge-react";
+
 import {
     Card,
-    AlphaCard,
     Page,
     Layout,
-    TextContainer,
-    Image,
-    Stack,
-    Link,
     Text,
     Loading,
     SkeletonBodyText,
+    EmptyState
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
-import { trophyImage } from "../assets";
+import { notFoundImage } from "../assets";
 
 import { SyncedProductsList } from "../components";
 
@@ -23,7 +20,7 @@ export default function HomePage() {
 
     // Temporary until we start reading the actual products.
     const loading = false;
-    const exampleProducts = [
+    /* const exampleProducts = [
         {
             image: trophyImage,
             title: "Product 1",
@@ -35,24 +32,41 @@ export default function HomePage() {
         },
         {
             image: trophyImage,
-            title: "Product 2",
+            title: "Product 2 with a really really long title.",
             id: 3,
-            copyTitle: "Product 2 Copy with a really really long title.",
+            copyTitle: "Product 2 Copy",
             copyId: 4,
             inventory: 15,
             updated: new Date(),
         }
-    ]
+    ]; */
+    const exampleProducts = [];
 
-    const loadingMarkup = loading && <AlphaCard>
-        {/* <Loading /> */}
-        <SkeletonBodyText />
-    </AlphaCard>
+    // Page contents
+    const loadingMarkup = loading &&
+        <Card sectioned>
+            <SkeletonBodyText />
+        </Card>;
 
-    const tableMarkup = !loading && <SyncedProductsList 
-        products={exampleProducts}
-        loading={loading}
-    />;
+    const emptyMarkup = !loading && !exampleProducts?.length &&
+        <Card sectioned>
+            <EmptyState
+                heading="No synced products"
+                action={{
+                    content: "Duplicate and Sync Product",
+                    onAction: () => navigate("/sync"),
+                }}
+                image={notFoundImage}
+            >
+                <p>Click the button to start syncing data between products.</p>
+            </EmptyState>
+        </Card>;
+
+    const tableMarkup = !loading && exampleProducts?.length ? 
+        <SyncedProductsList 
+            products={exampleProducts}
+            loading={loading}
+        /> : null;
 
     return (
         <Page fullWidth={!!tableMarkup}>
@@ -60,15 +74,14 @@ export default function HomePage() {
                 title="Product Sync"
                 primaryAction={{
                     content: "Duplicate and Sync Product",
-                    onAction: () => console.log("clicked"),
+                    onAction: () => navigate("/sync"),
                 }}
             />
-            <Layout>
-                <Layout.Section>
+                <Layout sectioned>
                     {loadingMarkup}
+                    {emptyMarkup}
                     {tableMarkup}
-                </Layout.Section>
-            </Layout>
+                </Layout>
         </Page>
     );
 }
