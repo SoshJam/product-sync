@@ -15,7 +15,9 @@
     "@shopify/app": "3.45.3",
     "@shopify/cli": "3.45.3",
     "@shopify/react-form": "^2.5.5",
-    "dayjs": "^1.11.7"
+    "dayjs": "^1.11.7",
+    "dotenv": "^16.0.3",
+    "mongodb": "^5.4.0"
   },
   "author": "Sam"
 }
