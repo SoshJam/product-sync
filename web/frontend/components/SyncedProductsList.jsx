@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch } from "@shopify/app-bridge-react";
 
 import {
     Card,
@@ -17,6 +19,8 @@ import dayjs from "dayjs";
 
 export function SyncedProductsList({ products, loading }) {
     const navigate = useNavigate();
+    const fetch = useAuthenticatedFetch();
+    const [ shopUrl, setShopUrl ] = useState("");
 
     const rowMarkup = products.map(
         ({ image, title, id, copyTitle, copyId, inventory, updated }, index) => 
@@ -56,7 +60,15 @@ export function SyncedProductsList({ products, loading }) {
                 />
             </IndexTable.Cell>
         </IndexTable.Row>
-    )
+    );
+
+    async function getShopUrl() {
+        const response = await fetch("/api/shopurl");
+        const json = await response.json();
+        return json.shopUrl.split(".")[0].replace("https://", "");
+    }
+
+    getShopUrl().then((shopUrl) => setShopUrl(shopUrl));
 
     return (
         <Card>
