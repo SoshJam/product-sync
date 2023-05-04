@@ -63,7 +63,7 @@ async function SearchDatabase( { databaseName, collectionName, query } ) {
     }
 }
 
-async function UpdateRecord( { databaseName, collectionName, query, data } ) {
+async function UpdateDocument( { databaseName, collectionName, query, data } ) {
         
     const command = {
         $set: data,
@@ -90,7 +90,7 @@ async function UpdateRecord( { databaseName, collectionName, query, data } ) {
     }
 }
 
-async function DeleteRecord( { databaseName, collectionName, query } ) {
+async function DeleteDocument( { databaseName, collectionName, query } ) {
     const client = createClient();
     try {
         await client.connect();
@@ -112,8 +112,8 @@ async function DeleteRecord( { databaseName, collectionName, query } ) {
 }
 
 module.exports = {
-    CreateRecord,
-    FindRecord,
-    UpdateRecord,
-    DeleteRecord,
+    InsertDocument,
+    SearchDatabase,
+    UpdateDocument,
+    DeleteDocument,
 }
