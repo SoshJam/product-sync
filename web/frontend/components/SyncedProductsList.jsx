@@ -1,4 +1,5 @@
 import { useNavigate } from "@shopify/app-bridge-react";
+
 import {
     Card,
     Icon,
@@ -8,6 +9,9 @@ import {
     Thumbnail,
     Link
 } from "@shopify/polaris";
+import {
+    CancelMajor
+} from '@shopify/polaris-icons';
 
 import dayjs from "dayjs";
 
@@ -26,13 +30,13 @@ export function SyncedProductsList({ products, loading }) {
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                <Link url={`/products/${id}`}>
+                <Link url={`/products/${id}`} monochrome>
                     {truncate(title, 25)}
                 </Link>
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                <Link url={`/products/${copyId}`}>
+                <Link url={`/products/${copyId}`} monochrome>
                     {truncate(copyTitle, 25)}
                 </Link>
             </IndexTable.Cell>
@@ -46,29 +50,34 @@ export function SyncedProductsList({ products, loading }) {
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                Stop Sync
+                <Icon
+                    source={CancelMajor}
+                    color="base"
+                />
             </IndexTable.Cell>
         </IndexTable.Row>
     )
 
-    return <Card>
-        <IndexTable
-            resourceName={{ singular: "product", plural: "products" }}
-            itemCount={products.length}
-            headings={[
-                { title: "Thumbnail", hidden: true },
-                { title: "Product" },
-                { title: "Copy" },
-                { title: "Inventory" },
-                { title: "Last Updated" },
-                { title: "Delete", hidden: true }
-            ]}
-            selectable={false}
-            loading={loading}
-        >
-            {rowMarkup}
-        </IndexTable>
-    </Card>
+    return (
+        <Card>
+            <IndexTable
+                resourceName={{ singular: "product", plural: "products" }}
+                itemCount={products.length}
+                headings={[
+                    { title: "Thumbnail", hidden: true },
+                    { title: "Product" },
+                    { title: "Copy" },
+                    { title: "Inventory" },
+                    { title: "Last Updated" },
+                    { title: "Delete", hidden: true }
+                ]}
+                selectable={false}
+                loading={loading}
+            >
+                {rowMarkup}
+            </IndexTable>
+        </Card>
+    );
 }
 
 /* A function to truncate long strings */
