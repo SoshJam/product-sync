@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@shopify/app": "3.45.3",
-    "@shopify/cli": "3.45.3"
+    "@shopify/cli": "3.45.3",
+    "dayjs": "^1.11.7"
   },
   "author": "Sam"
 }
