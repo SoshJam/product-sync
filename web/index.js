@@ -57,6 +57,13 @@ app.get("/api/products/create", async (_req, res) => {
   res.status(status).send({ success: status === 200, error });
 });
 
+app.get("/api/shopurl", async(_req, res) => {
+  let status = 200;
+  let error = null;
+
+  res.status(status).send({ success: status === 200, error, shopUrl: res.locals.shopify.session.shop });
+});
+
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
 
