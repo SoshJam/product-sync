@@ -51,7 +51,7 @@ export default function HomePage() {
     // Stop syncing a product
     const stopSync = useCallback((id) => {
         setDeleting(true);
-        fetch(`/api/database/delete/${id}`)
+        fetch(`/api/database/delete/${id}`, { method: "DELETE" })
             .then((response) => {
                 setDeleting(false);
                 refreshProducts();

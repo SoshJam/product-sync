@@ -82,7 +82,7 @@ app.get("/api/database/get/:id", async (_req, res) => {
   res.status(status).send({ success: status === 200, error, result });
 });
 
-app.get("/api/database/delete/:id", async (_req, res) => {
+app.delete("/api/database/delete/:id", async (_req, res) => {
   let status = 200;
   let error = null;
 
