@@ -1,5 +1,6 @@
-require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+import dotenv from "dotenv";
+import { MongoClient, ServerApiVersion } from "mongodb";
+dotenv.config();
 
 function createClient() {
     const connectionUri = process.env.CONNECTION_STRING;
@@ -14,7 +15,7 @@ function createClient() {
     return new MongoClient(connectionUri, clientOptions);
 };
 
-async function InsertDocument( { databaseName, collectionName, data } ) {
+export async function InsertDocument( { databaseName, collectionName, data } ) {
 
     data.lastModified = new Date();
 
@@ -38,7 +39,7 @@ async function InsertDocument( { databaseName, collectionName, data } ) {
     }
 }
 
-async function SearchDatabase( { databaseName, collectionName, query } ) {
+export async function SearchDatabase( { databaseName, collectionName, query } ) {
     const client = createClient();
     try {
         await client.connect();
@@ -63,7 +64,7 @@ async function SearchDatabase( { databaseName, collectionName, query } ) {
     }
 }
 
-async function UpdateDocument( { databaseName, collectionName, query, data } ) {
+export async function UpdateDocument( { databaseName, collectionName, query, data } ) {
         
     const command = {
         $set: data,
@@ -90,7 +91,7 @@ async function UpdateDocument( { databaseName, collectionName, query, data } ) {
     }
 }
 
-async function DeleteDocument( { databaseName, collectionName, query } ) {
+export async function DeleteDocument( { databaseName, collectionName, query } ) {
     const client = createClient();
     try {
         await client.connect();
@@ -109,11 +110,4 @@ async function DeleteDocument( { databaseName, collectionName, query } ) {
     finally {
         await client.close();
     }
-}
-
-module.exports = {
-    InsertDocument,
-    SearchDatabase,
-    UpdateDocument,
-    DeleteDocument,
 }
