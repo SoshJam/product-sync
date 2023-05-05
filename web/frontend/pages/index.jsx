@@ -21,51 +21,25 @@ export default function HomePage() {
     const navigate = useNavigate();
     const fetch = useAuthenticatedFetch();
     const [ loading, setLoading ] = useState(true);
+    const [ products, setProducts ] = useState([]);
 
-    // Temporary until we start reading the actual products.
-    const exampleProducts = [
-        {
-            image: trophyImage,
-            title: "Product 1",
-            id: 1,
-            copyTitle: "Product 1 Copy with a really really long title.",
-            copyId: 2,
-            inventory: 10,
-            updated: new Date(),
-        },
-        {
-            image: trophyImage,
-            title: "Product 2 with a really really long title.",
-            id: 3,
-            copyTitle: "Product 2 Copy",
-            copyId: 4,
-            inventory: 15,
-            updated: new Date(),
-        }
-    ];
-    //const exampleProducts = [];
-    
-    /*
-    // Get product data
-    async function getShopUrl() {
-        const response = await fetch("/api/shopurl");
-        const json = await response.json();
-        return json.shopUrl.split(".")[0];
-    }
-
-    
+    // Retrieve and display synced products
     useEffect(() => {
-        fetch("api/shopurl")
+        fetch("/api/database/get")
             .then((response) => response.json())
-            .then((json) => json.shopUrl.split(".")[0])
-            .then((shopUrl) => SearchDatabase( {
-                databaseName: "ProductSync",
-                collectionName: shopUrl,
-                query: { },
-            }))
-            .then((results) => console.log(results));
+            .then((json) => json.result.map((product) => ({
+                image: product.cachedProductData.images[0],
+                title: product.cachedProductData.title,
+                id: product.productId,
+                copyId: product.copyId,
+                inventory: product.cachedProductData.totalInventory,
+                updated: Date.parse(product.lastModified),
+            })))
+            .then((products) => {
+                setLoading(false);
+                setProducts(products);
+            });
     }, []);
-    */
 
     // Page contents
     const loadingMarkup = loading &&
@@ -73,12 +47,12 @@ export default function HomePage() {
             <SkeletonBodyText />
         </LegacyCard>;
 
-    const emptyMarkup = !loading && !exampleProducts?.length &&
+    const emptyMarkup = !loading && !products?.length &&
         <LegacyCard sectioned>
             <EmptyState
                 heading="No synced products"
                 action={{
-                    content: "Duplicate and Sync Product",
+                    content: "Duplicate and Sync Product", 
                     onAction: () => navigate("/sync"),
                 }}
                 image={notFoundImage}
@@ -87,9 +61,9 @@ export default function HomePage() {
             </EmptyState>
         </LegacyCard>;
 
-    const tableMarkup = !loading && exampleProducts?.length ? 
+    const tableMarkup = !loading && products?.length ? 
         <SyncedProductsList 
-            products={exampleProducts}
+            products={products}
             loading={loading}
         /> : null;
 
