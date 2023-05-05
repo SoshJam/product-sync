@@ -7,6 +7,7 @@ import serveStatic from "serve-static";
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import GDPRWebhookHandlers from "./gdpr.js";
+import { SearchDatabase } from "./backend/database.js";
 
 const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || "5000", 10);
 
@@ -37,32 +38,48 @@ app.use("/api/*", shopify.validateAuthenticatedSession());
 
 app.use(express.json());
 
-app.get("/api/products/count", async (_req, res) => {
-  const countData = await shopify.api.rest.Product.count({
-    session: res.locals.shopify.session,
-  });
-  res.status(200).send(countData);
-});
+// CRUD operations for the database
 
-app.get("/api/products/create", async (_req, res) => {
+app.get("/api/database/get", async (_req, res) => {
   let status = 200;
   let error = null;
+  let result = [];
 
   try {
-    await productCreator(res.locals.shopify.session);
-  } catch (e) {
-    console.log(`Failed to process products/create: ${e.message}`);
+    result = await SearchDatabase({
+      databaseName: "ProductSync",
+      collectionName: res.locals.shopify.session.shop.split(".")[0],
+      query: {}
+    });
+  }
+  
+  catch (e) {
     status = 500;
     error = e.message;
   }
-  res.status(status).send({ success: status === 200, error });
+
+  res.status(status).send({ success: status === 200, error, result });
 });
 
-app.get("/api/shopurl", async(_req, res) => {
+app.get("/api/database/get/:id", async (_req, res) => {
   let status = 200;
   let error = null;
+  let result = [];
 
-  res.status(status).send({ success: status === 200, error, shopUrl: res.locals.shopify.session.shop });
+  try {
+    result = await SearchDatabase({
+      databaseName: "ProductSync",
+      collectionName: res.locals.shopify.session.shop.split(".")[0],
+      query: { productId: parseInt(_req.params.id, 10) }
+    });
+  }
+  
+  catch (e) {
+    status = 500;
+    error = e.message;
+  }
+
+  res.status(status).send({ success: status === 200, error, result });
 });
 
 app.use(shopify.cspHeaders());
