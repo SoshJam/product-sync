@@ -1,4 +1,6 @@
 import { useNavigate } from "@shopify/app-bridge-react";
+import { useState, useEffect } from "react";
+import { useAuthenticatedFetch } from "@shopify/app-bridge-react";
 
 import {
     LegacyCard,
@@ -17,9 +19,10 @@ import { SyncedProductsList } from "../components";
 
 export default function HomePage() {
     const navigate = useNavigate();
+    const fetch = useAuthenticatedFetch();
+    const [ loading, setLoading ] = useState(true);
 
     // Temporary until we start reading the actual products.
-    const loading = false;
     const exampleProducts = [
         {
             image: trophyImage,
@@ -41,6 +44,28 @@ export default function HomePage() {
         }
     ];
     //const exampleProducts = [];
+    
+    /*
+    // Get product data
+    async function getShopUrl() {
+        const response = await fetch("/api/shopurl");
+        const json = await response.json();
+        return json.shopUrl.split(".")[0];
+    }
+
+    
+    useEffect(() => {
+        fetch("api/shopurl")
+            .then((response) => response.json())
+            .then((json) => json.shopUrl.split(".")[0])
+            .then((shopUrl) => SearchDatabase( {
+                databaseName: "ProductSync",
+                collectionName: shopUrl,
+                query: { },
+            }))
+            .then((results) => console.log(results));
+    }, []);
+    */
 
     // Page contents
     const loadingMarkup = loading &&
