@@ -1,5 +1,5 @@
 import { useNavigate } from "@shopify/app-bridge-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuthenticatedFetch } from "@shopify/app-bridge-react";
 
 import {
@@ -20,11 +20,18 @@ import { SyncedProductsList } from "../components";
 export default function HomePage() {
     const navigate = useNavigate();
     const fetch = useAuthenticatedFetch();
-    const [ loading, setLoading ] = useState(true);
+    const [ refreshing, setRefreshing ] = useState(false);
+    const [ deleting, setDeleting ] = useState(false);
     const [ products, setProducts ] = useState([]);
+    const loading = refreshing || deleting;
 
-    // Retrieve and display synced products
     useEffect(() => {
+        refreshProducts();
+    }, []);
+
+    // Fetch products from database
+    const refreshProducts = useCallback(() => {
+        setRefreshing(true);
         fetch("/api/database/get")
             .then((response) => response.json())
             .then((json) => json.result.map((product) => ({
@@ -36,10 +43,20 @@ export default function HomePage() {
                 updated: Date.parse(product.lastModified),
             })))
             .then((products) => {
-                setLoading(false);
+                setRefreshing(false);
                 setProducts(products);
             });
-    }, []);
+    }, [refreshing]);
+
+    // Stop syncing a product
+    const stopSync = useCallback((id) => {
+        setDeleting(true);
+        fetch(`/api/database/delete/${id}`)
+            .then((response) => {
+                setDeleting(false);
+                refreshProducts();
+            });
+    }, [deleting]);
 
     // Page contents
     const loadingMarkup = loading &&
@@ -65,6 +82,7 @@ export default function HomePage() {
         <SyncedProductsList 
             products={products}
             loading={loading}
+            stopSync={stopSync}
         /> : null;
 
     return (
@@ -75,6 +93,13 @@ export default function HomePage() {
                     content: "Duplicate and Sync Product",
                     onAction: () => navigate("/sync"),
                 }}
+                secondaryActions={[
+                    {
+                        content: "Refresh",
+                        onAction: refreshProducts,
+                        loading: loading,
+                    }
+                ]}
             />
                 <Layout sectioned>
                     {loadingMarkup}

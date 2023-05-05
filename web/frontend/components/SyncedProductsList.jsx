@@ -1,6 +1,6 @@
 import {
     Card,
-    Icon,
+    Button,
     IndexTable,
     Thumbnail,
     Link,
@@ -12,7 +12,7 @@ import {
 
 import dayjs from "dayjs";
 
-export function SyncedProductsList({ products, loading }) {
+export function SyncedProductsList({ products, loading, stopSync }) {
 
     const rowMarkup = products.map(
         ({ image, title, id, copyId, inventory, updated }, index) => 
@@ -52,10 +52,7 @@ export function SyncedProductsList({ products, loading }) {
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                <Icon
-                    source={CancelMajor}
-                    color="base"
-                />
+                <Button icon={CancelMajor} outline onClick={() => stopSync(id)} />
             </IndexTable.Cell>
         </IndexTable.Row>
     );
