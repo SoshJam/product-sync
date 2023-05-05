@@ -7,7 +7,7 @@ import serveStatic from "serve-static";
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import GDPRWebhookHandlers from "./gdpr.js";
-import { SearchDatabase } from "./backend/database.js";
+import { SearchDatabase, DeleteDocument } from "./backend/database.js";
 
 const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || "5000", 10);
 
@@ -80,6 +80,26 @@ app.get("/api/database/get/:id", async (_req, res) => {
   }
 
   res.status(status).send({ success: status === 200, error, result });
+});
+
+app.get("/api/database/delete/:id", async (_req, res) => {
+  let status = 200;
+  let error = null;
+
+  try {
+    await DeleteDocument({
+      databaseName: "ProductSync",
+      collectionName: res.locals.shopify.session.shop.split(".")[0],
+      query: { productId: parseInt(_req.params.id, 10) }
+    });
+  }
+  
+  catch (e) {
+    status = 500;
+    error = e.message;
+  }
+
+  res.status(status).send({ success: status === 200, error });
 });
 
 app.use(shopify.cspHeaders());
