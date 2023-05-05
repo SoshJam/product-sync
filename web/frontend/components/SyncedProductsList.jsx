@@ -2,10 +2,9 @@ import {
     Card,
     Icon,
     IndexTable,
-    Stack,
-    TextStyle,
     Thumbnail,
-    Link
+    Link,
+    UnstyledLink,
 } from "@shopify/polaris";
 import {
     CancelMajor
@@ -16,25 +15,31 @@ import dayjs from "dayjs";
 export function SyncedProductsList({ products, loading }) {
 
     const rowMarkup = products.map(
-        ({ image, title, id, copyTitle, copyId, inventory, updated }, index) => 
+        ({ image, title, id, copyId, inventory, updated }, index) => 
         <IndexTable.Row
             id={id}
             key={id}
             position={index}
         >
             <IndexTable.Cell>
-                <Thumbnail source={image} alt={title} size="small" />
+                <Thumbnail source={image.originalSrc} alt={image.altText || title} size="small" />
+            </IndexTable.Cell>
+
+            <IndexTable.Cell>
+                <UnstyledLink url={`/products/${id}`}>
+                    {title}
+                </UnstyledLink>
             </IndexTable.Cell>
 
             <IndexTable.Cell>
                 <Link url={`/products/${id}`} monochrome>
-                    {truncate(title, 25)}
+                    {id}
                 </Link>
             </IndexTable.Cell>
 
             <IndexTable.Cell>
                 <Link url={`/products/${copyId}`} monochrome>
-                    {truncate(copyTitle, 25)}
+                    {copyId}
                 </Link>
             </IndexTable.Cell>
 
@@ -62,7 +67,8 @@ export function SyncedProductsList({ products, loading }) {
                 itemCount={products.length}
                 headings={[
                     { title: "Thumbnail", hidden: true },
-                    { title: "Product" },
+                    { title: "Title" },
+                    { title: "Original" },
                     { title: "Copy" },
                     { title: "Inventory" },
                     { title: "Last Updated" },
