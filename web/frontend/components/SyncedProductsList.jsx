@@ -7,7 +7,8 @@ import {
     UnstyledLink,
 } from "@shopify/polaris";
 import {
-    CancelMajor
+    CancelMajor,
+    ImageMajor
 } from '@shopify/polaris-icons';
 
 import dayjs from "dayjs";
@@ -22,7 +23,7 @@ export function SyncedProductsList({ products, loading, stopSync }) {
             position={index}
         >
             <IndexTable.Cell>
-                <Thumbnail source={image.originalSrc} alt={image.altText || title} size="small" />
+                <Thumbnail source={image?.originalSrc || ImageMajor} alt={image?.altText || title} size="small" />
             </IndexTable.Cell>
 
             <IndexTable.Cell>
