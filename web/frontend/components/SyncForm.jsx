@@ -24,7 +24,7 @@ export function SyncForm() {
     const [ pickerOpen, setPickerOpen ] = useState(false);
     const togglePicker = useCallback(() => setPickerOpen(!pickerOpen), [pickerOpen]);
 
-    const [ selectedProduct, setSelectedProduct ] = useState(null);
+    const [ selectedProducts, setSelectedProducts ] = useState([]);
 
     /* 
         When a product is selected from the resource picker:
@@ -33,8 +33,7 @@ export function SyncForm() {
         - Close the resource picker.
     */
     const handleSelection = useCallback(({ selection }) => {
-        const [ product ] = selection;
-        setSelectedProduct(product);
+        setSelectedProducts(selection);
 
         togglePicker();
     }, []);
@@ -48,39 +47,29 @@ export function SyncForm() {
         - Return to the home page.
     */
     function handleSubmit() {
-        console.log(selectedProduct);
-        
         fetch("/api/database/insert", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                product: selectedProduct,
+                products: selectedProducts,
             }), 
         })
             .then((response) => response.json())
             .then((json) => {
-                console.log(json)
+                console.log(json);
                 navigate("/");
             });
-        
     };
-
-    /*
-        These variables are used to display product images, and will be populated when image URLs can be retrieved from the Admin.
-    */
-    const imageSrc = selectedProduct?.images?.edges?.[0]?.node?.url;
-    const originalImageSrc = selectedProduct?.images?.[0]?.originalSrc;
-    const altText = selectedProduct?.images?.[0]?.altText || selectedProduct?.title;
-
+    
     return (
         <>
         <Layout sectioned>
                 <LegacyCard
                     sectioned
                     title="Product"
-                    actions={selectedProduct && [
+                    actions={selectedProducts.length && [
                         {
                             content: "Change Product",
                             onAction: togglePicker,
@@ -90,43 +79,53 @@ export function SyncForm() {
                     <ResourcePicker
                         resourceType="Product"
                         open={pickerOpen}
-                        selectMultiple={false}
+                        selectMultiple={true}
                         showVariants={false}
 
                         onSelection={handleSelection}
                         onCancel={togglePicker}
                     />
-                    { selectedProduct ? (
-                        <HorizontalStack sectioned gap="5">
-                            {imageSrc || originalImageSrc ? (
-                                <Thumbnail
-                                    source={imageSrc || originalImageSrc}
-                                    alt={altText}
-                                />
-                            ) : (
-                                <Thumbnail
-                                    source={ImageMajor}
-                                    color="base"
-                                    size="small"
-                                />
-                            )}
-                            <VerticalStack sectioned gap="2">
-                                <Text as="p" fontWeight="bold">{selectedProduct.title}</Text>
-                                {/* TODO: Format money depending on merchant preferences. */}
-                                {
-                                    selectedProduct.variants[0]?.price ? (
-                                        <Text as="p">
-                                            Price: ${selectedProduct.variants[0].price} &bull; Inventory: {selectedProduct.totalInventory}
-                                        </Text>
-                                    ) : (
-                                        <Text as="p">
-                                            Inventory: {selectedProduct.totalInventory}
-                                        </Text>
-                                    )
-                                }
-                            </VerticalStack>
-                        </HorizontalStack>
-                            
+                    { selectedProducts.length ? (
+                        <VerticalStack sectioned gap="5">
+                            { selectedProducts.slice(0, 5).map((product) => {
+                                const imageSrc = product.images?.[0]?.originalSrc;
+                                const altText = product.images?.[0]?.altText || product.title;
+
+                                return (
+                                    <HorizontalStack sectioned gap="5">
+                                        {imageSrc ? (
+                                            <Thumbnail
+                                                source={imageSrc}
+                                                alt={altText}
+                                                size="medium"
+                                            />
+                                        ) : (
+                                            <Thumbnail
+                                                source={ImageMajor}
+                                                color="base"
+                                                size="medium"
+                                            />
+                                        )}
+                                        <VerticalStack sectioned gap="2">
+                                            <Text as="p" fontWeight="bold">{product.title}</Text>
+                                            {/* TODO: Format money depending on merchant preferences. */}
+                                            {
+                                                product.variants[0]?.price ? (
+                                                    <Text as="p">
+                                                        Price: ${product.variants[0].price} &bull; Inventory: {product.totalInventory}
+                                                    </Text>
+                                                ) : (
+                                                    <Text as="p">
+                                                        Inventory: {product.totalInventory}
+                                                    </Text>
+                                                )
+                                            }
+                                        </VerticalStack>
+                                    </HorizontalStack>
+                                );
+                            }) }
+                            { selectedProducts.length > 5 && <Text>+ {selectedProducts.length - 5} more...</Text>}
+                        </VerticalStack>
                     ) : (
                         <Button primary onClick={togglePicker}>Select Product</Button>
                     )}
@@ -136,7 +135,7 @@ export function SyncForm() {
                 primaryAction={{
                     content: "Duplicate and Sync",
                     onAction: handleSubmit,
-                    disabled: !selectedProduct,
+                    disabled: selectedProducts.length === 0,
                 }}
                 secondaryActions={[{
                     content: "Cancel",

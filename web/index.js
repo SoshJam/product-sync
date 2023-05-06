@@ -94,7 +94,7 @@ app.delete("/api/database/delete/:id", async (_req, res) => {
       databaseName: "ProductSync",
       collectionName: res.locals.shopify.session.shop.split(".")[0],
       query: { productId: parseInt(_req.params.id, 10) }
-    })
+    });
     
     const copyId = search[0].copyId;
 
@@ -122,25 +122,28 @@ app.delete("/api/database/delete/:id", async (_req, res) => {
     error = e.message;
   }
   
-  res.status(status).send({ success: status === 200, error, search });
+  res.status(status).send({ success: status === 200, error });
 });
 
 app.post("/api/database/insert", async (_req, res) => {
   let status = 200;
-  let error = null;
-  const product = _req.body.product;
-  var result;
+  let errors = [];
+  const products = _req.body.products;
+  var results = [];
   
   try {
-    result = await productDuplicator(product, res.locals.shopify.session);
+    // Must use a for loop here because we need to await the result of each call to productDuplicator
+    for (let i = 0; i < products.length; i++) {
+      results[i] = await productDuplicator(products[i], res.locals.shopify.session);
+    }
   }
 
   catch (e) {
     status = 500;
-    error = e.message;
+    errors.push(e.message);
   }
 
-  res.status(status).send({ success: status === 200, error, result });
+  res.status(status).send({ success: status === 200, errors, results });
 });
 
 app.use(shopify.cspHeaders());
