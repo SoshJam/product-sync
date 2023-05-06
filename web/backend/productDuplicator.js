@@ -53,7 +53,7 @@ export async function productDuplicator(product, session) {
     const copyIdString = duplicateProductResponse.body.data.productDuplicate.newProduct.id;
     const copyId = parseInt(copyIdString.split("/").pop(), 10);
 
-    // Update the prices of variants
+    // Update the prices and tags
 
     const oldDuplicate = await shopify.api.rest.Product.find({ session: session, id: copyId });
     const updatedDuplicate = new shopify.api.rest.Product({ session: session });
@@ -63,6 +63,7 @@ export async function productDuplicator(product, session) {
         variant.price = variant.price * priceMultiplier;
         return variant;
     });
+    updatedDuplicate.tags = oldDuplicate.tags.length > 0 ? oldDuplicate.tags + ", ProductSync Copy" : "ProductSync Copy";
 
     await updatedDuplicate.save();
 
