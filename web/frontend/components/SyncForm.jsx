@@ -15,9 +15,11 @@ import {
     useNavigate
 } from "@shopify/app-bridge-react";
 import { ImageMajor } from "@shopify/polaris-icons";
+import { useAuthenticatedFetch } from "../hooks";
 
 export function SyncForm() {
     const navigate = useNavigate();
+    const fetch = useAuthenticatedFetch();
 
     const [ pickerOpen, setPickerOpen ] = useState(false);
     const togglePicker = useCallback(() => setPickerOpen(!pickerOpen), [pickerOpen]);
@@ -47,7 +49,22 @@ export function SyncForm() {
     */
     function handleSubmit() {
         console.log(selectedProduct);
-        navigate("/");
+        
+        fetch("/api/database/insert", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                product: selectedProduct,
+            }), 
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(json)
+                navigate("/");
+            });
+        
     };
 
     /*
