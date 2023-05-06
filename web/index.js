@@ -7,8 +7,7 @@ import serveStatic from "serve-static";
 import shopify from "./shopify.js";
 import GDPRWebhookHandlers from "./gdpr.js";
 import { InsertDocument, SearchDatabase, DeleteDocument } from "./backend/database.js";
-import productDuplicator from "./backend/productDuplicator.js";
-
+import { productDuplicator } from "./backend/productDuplicator.js";
 const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || "5000", 10);
 
 const STATIC_PATH =
@@ -133,7 +132,7 @@ app.post("/api/database/insert", async (_req, res) => {
   var result;
   
   try {
-    result = productDuplicator(product, res.locals.shopify.session);
+    result = await productDuplicator(product, res.locals.shopify.session);
   }
 
   catch (e) {
