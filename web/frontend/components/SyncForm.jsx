@@ -8,6 +8,7 @@ import {
     HorizontalStack,
     VerticalStack,
     PageActions,
+    Modal,
 } from "@shopify/polaris";
 import {
     ContextualSaveBar,
@@ -22,7 +23,8 @@ export function SyncForm() {
     const fetch = useAuthenticatedFetch();
 
     const [ pickerOpen, setPickerOpen ] = useState(false);
-    const togglePicker = useCallback(() => setPickerOpen(!pickerOpen), [pickerOpen]);
+
+    const [ loading, setLoading ] = useState(false);
 
     const [ selectedProducts, setSelectedProducts ] = useState([]);
 
@@ -35,7 +37,7 @@ export function SyncForm() {
     const handleSelection = useCallback(({ selection }) => {
         setSelectedProducts(selection);
 
-        togglePicker();
+        setPickerOpen(false);
     }, []);
 
     /*
@@ -47,6 +49,8 @@ export function SyncForm() {
         - Return to the home page.
     */
     function handleSubmit() {
+        setLoading(true);
+
         fetch("/api/database/insert", {
             method: "POST",
             headers: {
@@ -59,6 +63,7 @@ export function SyncForm() {
             .then((response) => response.json())
             .then((json) => {
                 console.log(json);
+                setLoading(false);
                 navigate("/");
             });
     };
@@ -72,7 +77,7 @@ export function SyncForm() {
                     actions={selectedProducts.length && [
                         {
                             content: "Change Product",
-                            onAction: togglePicker,
+                            onAction: () => setPickerOpen(true),
                         }
                     ]}
                 >
@@ -83,7 +88,7 @@ export function SyncForm() {
                         showVariants={false}
 
                         onSelection={handleSelection}
-                        onCancel={togglePicker}
+                        onCancel={() => setPickerOpen(false)}
                     />
                     { selectedProducts.length ? (
                         <VerticalStack sectioned gap="5">
@@ -127,7 +132,7 @@ export function SyncForm() {
                             { selectedProducts.length > 5 && <Text>+ {selectedProducts.length - 5} more...</Text>}
                         </VerticalStack>
                     ) : (
-                        <Button primary onClick={togglePicker}>Select Product</Button>
+                        <Button primary onClick={() => setPickerOpen(true)}>Select Product</Button>
                     )}
                 </LegacyCard>
             </Layout>
@@ -136,12 +141,27 @@ export function SyncForm() {
                     content: "Duplicate and Sync",
                     onAction: handleSubmit,
                     disabled: selectedProducts.length === 0,
+                    loading: loading,
                 }}
                 secondaryActions={[{
                     content: "Cancel",
                     onAction: () => navigate("/"),
+                    disabled: loading,
                 }]}
             />
+            <Modal
+                open={loading}
+                onClose={null}
+                title="Syncing Products"
+                primaryAction={{
+                    content: "Close",
+                    onAction: null,
+                    loading: loading,
+                }}
+                sectioned
+            >
+                <Text as="p">Syncing {selectedProducts.length} products. This may take a while...</Text>
+            </Modal>
         </>
     );
 };
