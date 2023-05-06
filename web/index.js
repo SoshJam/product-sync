@@ -37,6 +37,10 @@ app.use("/api/*", shopify.validateAuthenticatedSession());
 
 app.use(express.json());
 
+app.get("/api/shop", (_req, res) => {
+  res.status(200).send({ success: true, shop: res.locals.shopify.session.shop.split(".")[0] });
+});
+
 // CRUD operations for the database
 
 app.get("/api/database/get", async (_req, res) => {
