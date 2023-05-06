@@ -1,3 +1,6 @@
+import { useState, useEffect } from "react";
+import { useAuthenticatedFetch } from "../hooks";
+
 import {
     Card,
     Button,
@@ -14,6 +17,16 @@ import {
 import dayjs from "dayjs";
 
 export function SyncedProductsList({ products, loading, stopSync }) {
+    const [ shopUrl, setShopUrl ] = useState("");
+    const fetch = useAuthenticatedFetch();
+
+    useEffect(() => {
+        fetch("/api/shop")
+            .then((response) => response.json())
+            .then((json) => setShopUrl(json.shop));
+    }, []);
+
+    const productUrl = (id) => `https://admin.shopify.com/store/${shopUrl}/products/${id}`;
 
     const rowMarkup = products.map(
         ({ image, title, id, copyId, inventory, updated }, index) => 
@@ -27,19 +40,19 @@ export function SyncedProductsList({ products, loading, stopSync }) {
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                <UnstyledLink url={`/products/${id}`}>
+                <UnstyledLink url={productUrl(id)}>
                     {title}
                 </UnstyledLink>
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                <Link url={`/products/${id}`} monochrome>
+                <Link url={productUrl(id)} monochrome>
                     {id}
                 </Link>
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                <Link url={`/products/${copyId}`} monochrome>
+                <Link url={productUrl(copyId)} monochrome>
                     {copyId}
                 </Link>
             </IndexTable.Cell>
