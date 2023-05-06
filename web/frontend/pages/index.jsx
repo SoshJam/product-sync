@@ -6,14 +6,14 @@ import {
     LegacyCard,
     Page,
     Layout,
-    Text,
     Loading,
     SkeletonBodyText,
-    EmptyState
+    EmptyState,
+    Toast,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
-import { notFoundImage, trophyImage } from "../assets";
+import { notFoundImage } from "../assets";
 
 import { SyncedProductsList } from "../components";
 
@@ -24,6 +24,9 @@ export default function HomePage() {
     const [ deleting, setDeleting ] = useState(false);
     const [ products, setProducts ] = useState([]);
     const loading = refreshing || deleting;
+
+    const emptyToastProps = { content: null };
+    const [ toastProps, setToastProps ] = useState(emptyToastProps);
 
     useEffect(() => {
         refreshProducts();
@@ -53,14 +56,16 @@ export default function HomePage() {
         setDeleting(true);
         fetch(`/api/database/delete/${id}`, { method: "DELETE" })
             .then((response) => {
-                setDeleting(false);
+                setToastProps({ content: "Stopped syncing product." })
                 refreshProducts();
+                setDeleting(false);
             });
     }, [deleting]);
 
     // Page contents
     const loadingMarkup = loading &&
         <LegacyCard sectioned>
+            <Loading />
             <SkeletonBodyText />
         </LegacyCard>;
 
@@ -85,6 +90,10 @@ export default function HomePage() {
             stopSync={stopSync}
         /> : null;
 
+    const toastMarkup = toastProps.content && !loading && (
+        <Toast {...toastProps} onDismiss={() => setToastProps(emptyToastProps)} />
+    );
+
     return (
         <Page fullWidth={!!tableMarkup}>
             <TitleBar
@@ -102,6 +111,7 @@ export default function HomePage() {
                 ]}
             />
                 <Layout sectioned>
+                    {toastMarkup}
                     {loadingMarkup}
                     {emptyMarkup}
                     {tableMarkup}
