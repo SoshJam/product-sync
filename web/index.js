@@ -102,15 +102,15 @@ app.delete("/api/database/delete/:id", async (_req, res) => {
 
     // Then delete the record in the database
 
-    await DeleteDocument({
+    DeleteDocument({
       databaseName: "ProductSync",
       collectionName: res.locals.shopify.session.shop.split(".")[0],
       query: { productId: parseInt(_req.params.id, 10) }
     });
 
-    // Finally, delete the duplicate product in Shopify
+    // And delete the duplicate product in Shopify
 
-    await shopify.api.rest.Product.delete({
+    shopify.api.rest.Product.delete({
       session: res.locals.shopify.session,
       id: copyId,
     });
