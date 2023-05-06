@@ -1,6 +1,6 @@
 import { useNavigate } from "@shopify/app-bridge-react";
 import { useState, useEffect, useCallback } from "react";
-import { useAuthenticatedFetch } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch } from "../hooks";
 
 import {
     LegacyCard,
