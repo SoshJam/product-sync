@@ -9,9 +9,9 @@ import {
     VerticalStack,
     PageActions,
     Modal,
+    Loading,
 } from "@shopify/polaris";
 import {
-    ContextualSaveBar,
     ResourcePicker,
     useNavigate
 } from "@shopify/app-bridge-react";
@@ -160,6 +160,7 @@ export function SyncForm() {
                 }}
                 sectioned
             >
+                <Loading />
                 <Text as="p">Syncing {selectedProducts.length} products. This may take a while...</Text>
             </Modal>
         </>
