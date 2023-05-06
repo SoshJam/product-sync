@@ -1,9 +1,10 @@
 import dotenv from "dotenv";
-import { MongoClient, ServerApiVersion } from "mongodb";
 dotenv.config();
 
+import { MongoClient, ServerApiVersion } from "mongodb";
+
 function createClient() {
-    const connectionUri = process.env.CONNECTION_STRING;
+    const connectionString = process.env.CONNECTION_STRING;
     const clientOptions = {
         useNewUrlParser: true,
         serverApi: {
@@ -12,7 +13,7 @@ function createClient() {
             deprecationErrors: true,
         }
     };
-    return new MongoClient(connectionUri, clientOptions);
+    return new MongoClient(connectionString, clientOptions);
 };
 
 export async function InsertDocument( { databaseName, collectionName, data } ) {
@@ -31,7 +32,7 @@ export async function InsertDocument( { databaseName, collectionName, data } ) {
     }
     
     catch (error) {
-        console.log(error);
+        throw error;
     }
     
     finally {
@@ -56,7 +57,7 @@ export async function SearchDatabase( { databaseName, collectionName, query } ) 
     }
     
     catch (error) {
-        console.log(error);
+        throw error;
     }
     
     finally {
@@ -83,7 +84,7 @@ export async function UpdateDocument( { databaseName, collectionName, query, dat
     }
 
     catch (error) {
-        console.log(error);
+        throw error;
     }
 
     finally {
@@ -104,7 +105,7 @@ export async function DeleteDocument( { databaseName, collectionName, query } ) 
     }
 
     catch (error) {
-        console.log(error);
+        throw error;
     }
 
     finally {
