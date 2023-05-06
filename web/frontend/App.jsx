@@ -5,8 +5,10 @@ import Routes from "./Routes";
 import {
   AppBridgeProvider,
   QueryProvider,
-  PolarisProvider,
+  PolarisProvider
 } from "./components";
+
+import { Frame } from "@shopify/polaris";
 
 export default function App() {
   // Any .tsx or .jsx files in /pages will become a route
@@ -18,7 +20,9 @@ export default function App() {
       <BrowserRouter>
         <AppBridgeProvider>
           <QueryProvider>
-            <Routes pages={pages} />
+            <Frame>
+              <Routes pages={pages} />
+            </Frame>
           </QueryProvider>
         </AppBridgeProvider>
       </BrowserRouter>
