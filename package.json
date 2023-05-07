@@ -15,6 +15,7 @@
     "@shopify/app": "3.45.3",
     "@shopify/cli": "3.45.3",
     "@shopify/react-form": "^2.5.5",
+    "@shopify/shopify-api": "^7.0.0",
     "aws-sdk": "^2.1372.0",
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
