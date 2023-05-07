@@ -62,7 +62,6 @@ export function SyncForm() {
         })
             .then((response) => response.json())
             .then((json) => {
-                console.log(json);
                 setLoading(false);
                 navigate("/");
             });
