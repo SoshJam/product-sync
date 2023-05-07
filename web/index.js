@@ -18,10 +18,39 @@ const STATIC_PATH =
 const app = express();
 
 // Set up Shopify authentication and webhook handling
+
+const createWebhooks = async (_req, res) => {
+  const address = `${process.env.HOST}/api/webhooks`;
+  const requiredSubscriptions = [
+    "products/update", // When a product/variant is updated or ordered
+    "products/delete", // When a product is deleted
+  ];
+
+  // First loop through and get the webhooks that are already present
+  const existingWebhooksReponse = await shopify.api.rest.Webhook.all({ session: res.locals.shopify.session });
+  const existingWebhooks = existingWebhooksReponse.data
+    // .filter((webhook) => webhook.address === address)
+    .map((webhook) => ({ topic: webhook.topic, address: webhook.address, id: webhook.id }));
+  const existingSubscriptions = existingWebhooks.map((webhook) => webhook.topic);
+
+  // Then loop through and create the webhooks that are not already present
+
+  requiredSubscriptions.forEach(async (subscription) => {
+    if (!existingSubscriptions.includes(subscription)) {
+      const webhook = new shopify.api.rest.Webhook({ session: res.locals.shopify.session });
+      webhook.topic = subscription;
+      webhook.address = address;
+      webhook.format = "json";
+      webhook.save();
+    }
+  });
+}
+
 app.get(shopify.config.auth.path, shopify.auth.begin());
 app.get(
   shopify.config.auth.callbackPath,
   shopify.auth.callback(),
+  createWebhooks,
   shopify.redirectToShopifyOrAppRoot()
 );
 app.post(
@@ -36,6 +65,8 @@ app.post(
 app.use("/api/*", shopify.validateAuthenticatedSession());
 
 app.use(express.json());
+
+app.get("/api/create-webhooks", createWebhooks);
 
 app.get("/api/shop", (_req, res) => {
   res.status(200).send({ success: true, shop: res.locals.shopify.session.shop.split(".")[0] });
