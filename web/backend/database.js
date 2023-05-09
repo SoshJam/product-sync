@@ -112,3 +112,27 @@ export async function DeleteDocument( { databaseName, collectionName, query } ) 
         await client.close();
     }
 }
+
+export async function DropCollection( { databaseName, collectionName } ) {
+    const client = createClient();
+    try {
+        await client.connect();
+
+        const database = client.db(databaseName);
+        const collection = database.collection(collectionName);
+
+        const result = await collection.drop((error, deleted) => {
+            if (error) throw error;
+            if (deleted) console.log(`Dropped collection ${collectionName}`);
+        });
+        return result;
+    }
+
+    catch (error) {
+        throw error;
+    }
+
+    finally {
+        await client.close();
+    }
+}
