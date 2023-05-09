@@ -72,9 +72,17 @@ export async function ProductDelete( productId, session ) {
  * @param {Session} session - The authenticated Shopify session.
  */
 export async function AppUninstalled( session ) {
+    // Delete the collection of synced products specific to this store
     await DropCollection({
         databaseName: "ProductSync",
         collectionName: session.shop.split(".")[0]
+    });
+
+    // Delete the store's session/access token data
+    await DeleteDocument({
+        databaseName: "ProductSync",
+        collectionName: "clients",
+        query: { shop: session.shop.split(".")[0] }
     });
 }
 
