@@ -8,6 +8,7 @@ import shopify from "./shopify.js";
 import GDPRWebhookHandlers from "./gdpr.js";
 import { InsertDocument, SearchDatabase, DeleteDocument } from "./backend/database.js";
 import { productDuplicator } from "./backend/productDuplicator.js";
+import { AppUninstalled, ProductDelete, ProductUpdate } from "./backend/webhookHandlers.js";
 const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || "5000", 10);
 
 const STATIC_PATH =
@@ -46,6 +47,56 @@ const createWebhooks = async (_req, res) => {
   });
 }
 
+const processWebhooks = async (req, res, next) => {
+  
+  // First, send a 200 response to acknowledge receipt of the webhook
+  res.status(200).send({ success: true });
+
+  const shop = req.headers["x-shopify-shop-domain"];
+  const topic = req.headers["x-shopify-topic"];
+
+  const productId = [
+    "products/update",
+    "products/delete",
+  ].includes(topic) ?
+    parseInt(req.headers["x-shopify-product-id"], 10) :
+    undefined; // is this smart or stupid? it works but it's javascript
+
+  const webhookId = req.headers["x-shopify-webhook-id"];
+  const session = res.locals.shopify.session;
+
+  console.log("Webhook received:\n", {
+    shop,
+    topic,
+    webhookId,
+    productId
+  });
+
+  // Process the webhook depending on the topic.
+  var result = null;
+  try {
+    switch (topic) {
+      case "products/update":
+        result = await ProductUpdate(productId, session);
+        break;
+      case "products/delete":
+        result = await ProductDelete(productId, session);
+        break;
+      case "app/uninstalled":
+        result = await AppUninstalled(session);
+        break;
+    }
+  }
+
+  catch (e) {
+    console.log(e);
+  }
+
+  console.log(result);
+
+  // return next();
+};
+
 app.get(shopify.config.auth.path, shopify.auth.begin());
 app.get(
   shopify.config.auth.callbackPath,
@@ -55,8 +106,9 @@ app.get(
 );
 app.post(
   shopify.config.webhooks.path,
+  processWebhooks,
   // @ts-ignore
-  shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers })
+  // shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers }),
 );
 
 // If you are adding routes outside of the /api path, remember to
