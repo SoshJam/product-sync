@@ -15,7 +15,6 @@ export default {
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
             console.log(`Received webhook: ${topic} - ${webhookId}`);
-            console.log("Shop:", shop);
         },
     },
 
@@ -32,7 +31,6 @@ export default {
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
             console.log(`Received webhook: ${topic} - ${webhookId}`);
-            console.log("Shop:", shop);
         },
     },
 
@@ -52,7 +50,6 @@ export default {
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
             console.log(`Received webhook: ${topic} - ${webhookId}`);
-            console.log("Shop:", shop);
 
             // Delete the collection of synced products specific to this store
             await DropCollection({
@@ -77,10 +74,7 @@ export default {
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
             console.log(`Received webhook: ${topic} - ${webhookId}`);
-            console.log("Shop:", shop);
-
             const payload = JSON.parse(body);
-            console.log(payload);
         },
     },
 
@@ -96,7 +90,6 @@ export default {
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
             console.log(`Received webhook: ${topic} - ${webhookId}`);
-            console.log("Shop:", shop);
             const payload = JSON.parse(body);
             
             const productId = payload.id;
