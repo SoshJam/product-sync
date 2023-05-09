@@ -23,7 +23,7 @@ export function SyncedProductsList({ products, loading, stopSync }) {
     useEffect(() => {
         fetch("/api/shop")
             .then((response) => response.json())
-            .then((json) => setShopUrl(json.shop));
+            .then((json) => setShopUrl(json.shop.split(".")[0]));
     }, []);
 
     const productUrl = (id) => `https://admin.shopify.com/store/${shopUrl}/products/${id}`;
