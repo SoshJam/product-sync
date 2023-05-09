@@ -1,5 +1,6 @@
 import { DeliveryMethod } from "@shopify/shopify-api";
-import { GetSession, DeleteDocument, DropCollection } from "./database.js";
+import { SearchDatabase, InsertDocument, UpdateDocument, DeleteDocument, DropCollection, GetSession } from "./database.js";
+import shopify from "../shopify.js";
 
 export default {
     /**
