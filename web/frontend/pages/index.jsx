@@ -36,8 +36,6 @@ export default function HomePage() {
     const refreshProducts = useCallback(() => {
         setRefreshing(true);
         
-        fetch("/api/create-webhooks");
-        
         fetch("/api/database/get")
             .then((response) => response.json())
             .then((json) => json.result.map((product) => ({
