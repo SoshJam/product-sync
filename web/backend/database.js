@@ -136,3 +136,13 @@ export async function DropCollection( { databaseName, collectionName } ) {
         await client.close();
     }
 }
+
+export async function GetSession( { shop } ) {
+    const result = await SearchDatabase({
+        databaseName: "ProductSync",
+        collectionName: "clients",
+        query: { shop: shop }
+    });
+
+    return result[0]?.session || undefined;
+}

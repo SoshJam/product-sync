@@ -31,7 +31,7 @@ export async function productDuplicator(product, session) {
 
     const searchResult = await SearchDatabase({
         databaseName: "ProductSync",
-        collectionName: session.shop.split(".")[0],
+        collectionName: session.shop,
         query: { productId: product.id }
     });
     
@@ -71,7 +71,7 @@ export async function productDuplicator(product, session) {
 
     await InsertDocument({
         databaseName: "ProductSync",
-        collectionName: session.shop.split(".")[0],
+        collectionName: session.shop,
         data: {
             productId: product.id,
             copyId: copyId,
