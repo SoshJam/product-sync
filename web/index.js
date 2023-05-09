@@ -6,9 +6,9 @@ import serveStatic from "serve-static";
 
 import shopify from "./shopify.js";
 import GDPRWebhookHandlers from "./gdpr.js";
+import WebhookHandlers from "./backend/webhookHandlers.js";
 import { InsertDocument, SearchDatabase, DeleteDocument } from "./backend/database.js";
 import { productDuplicator } from "./backend/productDuplicator.js";
-import { AppUninstalled, ProductDelete, ProductUpdate } from "./backend/webhookHandlers.js";
 const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || "5000", 10);
 
 const STATIC_PATH =
@@ -20,17 +20,39 @@ const app = express();
 
 // Set up Shopify authentication and webhook handling
 
-const createWebhooks = async (_req, res) => {
+const saveSession = async (req, res, next) => {
+  console.log("Saving session...", res.locals.shopify.session);
+
+  const session = res.locals.shopify.session;
+  session.isOnline = true;
+
+  // Save the session to the database
+  await InsertDocument({
+    databaseName: "ProductSync",
+    collectionName: "clients",
+    data: {
+      shop: session.shop,
+      session: session,
+    }
+  });
+
+  return next();
+};
+
+const createWebhooks = async (_req, res, next) => {
+  console.log("Creating webhooks...");
+
   const address = `${process.env.HOST}/api/webhooks`;
   const requiredSubscriptions = [
     "products/update", // When a product/variant is updated or ordered
     "products/delete", // When a product is deleted
+    "app/uninstalled", // When the app is uninstalled
   ];
 
   // First loop through and get the webhooks that are already present
   const existingWebhooksReponse = await shopify.api.rest.Webhook.all({ session: res.locals.shopify.session });
   const existingWebhooks = existingWebhooksReponse.data
-    // .filter((webhook) => webhook.address === address)
+    .filter((webhook) => webhook.address == address)
     .map((webhook) => ({ topic: webhook.topic, address: webhook.address, id: webhook.id }));
   const existingSubscriptions = existingWebhooks.map((webhook) => webhook.topic);
 
@@ -45,84 +67,42 @@ const createWebhooks = async (_req, res) => {
       webhook.save();
     }
   });
+
+  console.log(Math.max(0, requiredSubscriptions.length - existingSubscriptions.length) + " webhooks created for address " + address + ".");
+
+  return next();
 }
-
-const processWebhooks = async (req, res, next) => {
-  
-  // First, send a 200 response to acknowledge receipt of the webhook
-  res.status(200).send({ success: true });
-
-  const shop = req.headers["x-shopify-shop-domain"];
-  const topic = req.headers["x-shopify-topic"];
-
-  const productId = [
-    "products/update",
-    "products/delete",
-  ].includes(topic) ?
-    parseInt(req.headers["x-shopify-product-id"], 10) :
-    undefined; // is this smart or stupid? it works but it's javascript
-
-  const webhookId = req.headers["x-shopify-webhook-id"];
-  const session = res.locals.shopify.session;
-
-  console.log("Webhook received:\n", {
-    shop,
-    topic,
-    webhookId,
-    productId
-  });
-
-  // Process the webhook depending on the topic.
-  var result = null;
-  try {
-    switch (topic) {
-      case "products/update":
-        result = await ProductUpdate(productId, session);
-        break;
-      case "products/delete":
-        result = await ProductDelete(productId, session);
-        break;
-      case "app/uninstalled":
-        result = await AppUninstalled(session);
-        break;
-    }
-  }
-
-  catch (e) {
-    console.log(e);
-  }
-
-  console.log(result);
-
-  // return next();
-};
-
+      
 app.get(shopify.config.auth.path, shopify.auth.begin());
 app.get(
   shopify.config.auth.callbackPath,
-  shopify.auth.callback(),
-  createWebhooks,
+  shopify.auth.callback(), // given callback function
+  saveSession, // save the session data to the database
+  createWebhooks, // create the necessary webhook subscriptions
   shopify.redirectToShopifyOrAppRoot()
 );
 app.post(
   shopify.config.webhooks.path,
-  processWebhooks,
+  // processWebhooks,
   // @ts-ignore
   // shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers }),
+  // @ts-ignore
+  shopify.processWebhooks({ webhookHandlers: WebhookHandlers }),
 );
 
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in web/frontend/vite.config.js
 
+// Everything after this point requires authentication
+
 app.use("/api/*", shopify.validateAuthenticatedSession());
 
 app.use(express.json());
 
+// Webhooks
+
 app.get("/api/create-webhooks", createWebhooks);
 
-app.get("/api/shop", (_req, res) => {
-  res.status(200).send({ success: true, shop: res.locals.shopify.session.shop.split(".")[0] });
-});
 
 // CRUD operations for the database
 
@@ -134,7 +114,7 @@ app.get("/api/database/get", async (_req, res) => {
   try {
     result = await SearchDatabase({
       databaseName: "ProductSync",
-      collectionName: res.locals.shopify.session.shop.split(".")[0],
+      collectionName: res.locals.shopify.session.shop,
       query: {}
     });
   }
@@ -155,7 +135,7 @@ app.get("/api/database/get/:id", async (_req, res) => {
   try {
     result = await SearchDatabase({
       databaseName: "ProductSync",
-      collectionName: res.locals.shopify.session.shop.split(".")[0],
+      collectionName: res.locals.shopify.session.shop,
       query: { productId: parseInt(_req.params.id, 10) }
     });
   }
@@ -179,7 +159,7 @@ app.delete("/api/database/delete/:id", async (_req, res) => {
 
     search = await SearchDatabase({
       databaseName: "ProductSync",
-      collectionName: res.locals.shopify.session.shop.split(".")[0],
+      collectionName: res.locals.shopify.session.shop,
       query: { productId: parseInt(_req.params.id, 10) }
     });
     
@@ -191,7 +171,7 @@ app.delete("/api/database/delete/:id", async (_req, res) => {
 
     DeleteDocument({
       databaseName: "ProductSync",
-      collectionName: res.locals.shopify.session.shop.split(".")[0],
+      collectionName: res.locals.shopify.session.shop,
       query: { productId: parseInt(_req.params.id, 10) }
     });
 
@@ -231,6 +211,12 @@ app.post("/api/database/insert", async (_req, res) => {
   }
 
   res.status(status).send({ success: status === 200, errors, results });
+});
+
+// Misc
+
+app.get("/api/shop", (_req, res) => {
+  res.status(200).send({ success: true, shop: res.locals.shopify.session.shop });
 });
 
 app.use(shopify.cspHeaders());
