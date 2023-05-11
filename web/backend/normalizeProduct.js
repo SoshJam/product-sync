@@ -27,17 +27,14 @@ export function normalizeProduct( product ) {
 
     // Go through line by line for the top-level properties
 
-    normalized.body_html = product.body_html || product.descrpitionHtml;
-    normalized.created_at = product.created_at || product.createdAt;
+    normalized.body_html = product.body_html || product.descrptionHtml || product.bodyHtml;
     normalized.handle = product.handle;
     normalized.id = product.id ? (typeof(product.id) == "number" ? product.id : parseInt(product.id.split("/").pop(), 10)) : undefined;
-    normalized.product_type = product.product_type || product.productType;
-    normalized.published_at = product.published_at || product.publishedAt;
-    normalized.published_scope = product.published_scope || product.publishedScope;
+    normalized.product_type = product.product_type || product.productType || '';
+    normalized.published_scope = product.published_scope || product.publishedScope || "web";
     normalized.status = product.status.toLowerCase();
-    normalized.template_suffix = product.template_suffix || product.templateSuffix;
+    normalized.template_suffix = product.template_suffix || product.templateSuffix || '';
     normalized.title = product.title;
-    normalized.updated_at = product.updated_at || product.updatedAt;
     normalized.vendor = product.vendor;
 
     normalized.images = product.images.map((image) => ({
@@ -64,7 +61,6 @@ export function normalizeProduct( product ) {
     normalized.variants = product.variants.map((variant) => ({
         barcode: variant.barcode,
         compare_at_price: variant.compare_at_price || variant.compareAtPrice,
-        created_at: variant.created_at || variant.createdAt,
         fulfillment_service: variant.fulfillment_service || variant.fulfillmentService.type.toLowerCase(),
         grams: variant.grams,
         weight: variant.weight,
@@ -84,7 +80,6 @@ export function normalizeProduct( product ) {
         sku: variant.sku,
         taxable: variant.taxable,
         title: variant.title,
-        updated_at: variant.updated_at || variant.updatedAt,
     }));
 
     return normalized;
