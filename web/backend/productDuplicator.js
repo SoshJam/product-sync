@@ -77,6 +77,7 @@ export async function productDuplicator(product, session) {
             copyId: copyId,
             priceMultiplier: priceMultiplier,
             cachedProductData: product,
+            lastSynced: new Date(),
         }
     });
 
