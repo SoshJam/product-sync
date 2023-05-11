@@ -20,10 +20,17 @@ const app = express();
 // Set up Shopify authentication and webhook handling
 
 const saveSession = async (req, res, next) => {
-  console.log("Saving session...", res.locals.shopify.session);
+  console.log("Saving session.");
 
   const session = res.locals.shopify.session;
   session.isOnline = true;
+
+  // Delete any existing session for this shop
+  await DeleteDocument({
+    databaseName: "ProductSync",
+    collectionName: "clients",
+    query: { shop: session.shop }
+  });
 
   // Save the session to the database
   await InsertDocument({
