@@ -5,7 +5,6 @@ import express from "express";
 import serveStatic from "serve-static";
 
 import shopify from "./shopify.js";
-import GDPRWebhookHandlers from "./gdpr.js";
 import WebhookHandlers from "./backend/webhookHandlers.js";
 import { InsertDocument, SearchDatabase, DeleteDocument } from "./backend/database.js";
 import { productDuplicator } from "./backend/productDuplicator.js";
@@ -83,10 +82,7 @@ app.get(
 );
 app.post(
   shopify.config.webhooks.path,
-  // processWebhooks,
-  // @ts-ignore
-  // shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers }),
-  // @ts-ignore
+  // @ts-ignore - the types are a little off here
   shopify.processWebhooks({ webhookHandlers: WebhookHandlers }),
 );
 
