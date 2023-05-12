@@ -4,6 +4,34 @@ import shopify from "../shopify.js";
 import { normalizeProduct } from "./normalizeProduct.js";
 import { jsonDiff } from "./jsonDiff.js";
 
+const GET_CATEGORY_QUERY = `
+    query GetCategory($id: ID!) {
+        product(id: $id) {
+            id
+            productCategory {
+                productTaxonomyNode {
+                    id
+                }
+            }
+        }
+    }
+`;
+
+const UPDATE_CATEGORY_MUTATION = `
+    mutation UpdateCategory($input: ProductInput!) {
+        productUpdate(input: $input) {
+            product {
+                id
+                productCategory {
+                    productTaxonomyNode {
+                        id
+                    }
+                }
+            }
+        }
+    }
+`;
+
 /**
  * I would love to know how these get processed but unfortunately the
  * documentation is lacking.
@@ -93,20 +121,20 @@ export default {
             const payload = JSON.parse(body);
             
             const priceMultiplier = 0.5;
-            const productId = payload.id;
+            const updatedId = payload.id;
 
             const session = await GetSession({ shop });
 
             const searchOriginals = await SearchDatabase({
                 databaseName: "ProductSync",
                 collectionName: shop,
-                query: { productId: productId }
+                query: { productId: updatedId }
             });
 
             const searchCopies = await SearchDatabase({
                 databaseName: "ProductSync",
                 collectionName: shop,
-                query: { copyId: productId }
+                query: { copyId: updatedId }
             });
 
             // If either has more than 1 result or both have 1 result, there's a duplicate in the database.
@@ -122,9 +150,11 @@ export default {
                 return;
 
             // Now we know that either the original or the copy has 1 result.
-
+            
             const isOriginal = searchOriginals.length === 1;
-            const old_data = isOriginal ? searchOriginals[0].cachedProductData : searchCopies[0].cachedProductData;
+            const result = isOriginal ? searchOriginals[0] : searchCopies[0];
+            const otherId = isOriginal ? result.copyId : result.productId;
+            const old_data = result.cachedProductData;
 
             const old_product = normalizeProduct(old_data);
             const new_product = normalizeProduct(payload);
@@ -156,35 +186,71 @@ export default {
             // Get what was changed
             const differences = jsonDiff(old_product, new_product);
 
+            // If nothing was changed, ignore this webhook.
+            if (differences.length === 0)
+                return;
+
             // Update the original
 
             const original = new shopify.api.rest.Product({ session: session });
-            original.id = (searchOriginals[0] || searchCopies[0]).productId;
             Object.assign(original, differences);
+            original.id = result.productId;
             await original.save({ update: true });
 
             // Update the copy
 
             const copy = new shopify.api.rest.Product({ session: session });
-            copy.id = (searchOriginals[0] || searchCopies[0]).copyId;
             Object.assign(copy, differences);
-            if (differences.title) copy.title = differences.title + " (ProductSync Copy)";
-            if (differences.tags) copy.tags = differences.tags.length > 0 ? differences.tags + ", ProductSync Copy" : "ProductSync Copy";
+            if (differences.title || !copy.title?.includes("(ProductSync Copy)")) copy.title = new_product.title + " (ProductSync Copy)";
+            if (differences.tags || !copy.tags?.includes("ProductSync Copy")) copy.tags = new_product.tags.length > 0 ? new_product.tags + ", ProductSync Copy" : "ProductSync Copy";
             if (differences.variants) 
                 differences.variants = differences.variants.map(variant => {
                     variant.price = variant.price * priceMultiplier;
                     delete variant.id;
                     delete variant.productId;
                     return variant;
-                });
+            });
+            copy.id = result.copyId;
             await copy.save({ update: true });
+
+            // Take the product that was updated, and using GraphQL, ensure both products' categories match
+            
+            const gqlClient = new shopify.api.clients.Graphql({ session });
+
+                // Get the category
+
+            const categoryResponse = await gqlClient.query({
+                data: {
+                    query: GET_CATEGORY_QUERY,
+                    variables: {
+                        id: "gid://shopify/Product/" + updatedId,
+                    },
+                },
+            });
+
+                // Update the category for the other product
+
+            const category = categoryResponse.body.data.product.productCategory;
+            const categoryInput = category ? { productTaxonomyNodeId: category.productTaxonomyNode.id } : null;
+
+            await gqlClient.query({
+                data: {
+                    query: UPDATE_CATEGORY_MUTATION,
+                    variables: {
+                        input: {
+                            id: "gid://shopify/Product/" + otherId,
+                            productCategory: categoryInput,
+                        }
+                    },
+                },
+            });
 
             // Update the cached product data in the database
 
             await UpdateDocument({
                 databaseName: "ProductSync",
                 collectionName: shop,
-                query: (isOriginal ? { productId: productId } : { copyId: productId }),
+                query: (isOriginal ? { productId: updatedId } : { copyId: updatedId }),
                 data: {
                     cachedProductData: new_product,
                     lastSynced: new Date(), 
