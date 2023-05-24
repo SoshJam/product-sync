@@ -142,16 +142,21 @@ export default {
                 throw new Error("There are multiple records for this product.");
 
             // If both have 0 results, we aren't syncing this product.
-            if (searchOriginals.length === 0 && searchCopies.length === 0)
+            if (searchOriginals.length === 0 && searchCopies.length === 0) {
+                console.log("This product is not being synced. Ignoring webhook.");
                 return;
+            }
 
             // If we synced this product within the last 5 seconds, ignore this webhook.
-            if ((searchOriginals[0] || searchCopies[0]).lastSynced > new Date(Date.now() - 5000))
+            if ((searchOriginals[0] || searchCopies[0]).lastSynced > new Date(Date.now() - 5000)) {
+                console.log("This product was synced within the last 5 seconds. Ignoring webhook.");
                 return;
+            }
 
             // Now we know that either the original or the copy has 1 result.
             
             const isOriginal = searchOriginals.length === 1;
+            console.log(isOriginal ? "The updated project is the original." : "The updated product is the copy.")
             const result = isOriginal ? searchOriginals[0] : searchCopies[0];
             const otherId = isOriginal ? result.copyId : result.productId;
             const old_data = result.cachedProductData;
@@ -180,7 +185,7 @@ export default {
             });
             new_product.variants.forEach(variant => {
                 delete variant.id;
-                delete variant.productId;
+                delete variant.product_id;
             });
 
             // Get what was changed
@@ -207,17 +212,61 @@ export default {
                 differences.variants = differences.variants.map(variant => {
                     variant.price = variant.price * priceMultiplier;
                     delete variant.id;
-                    delete variant.productId;
+                    delete variant.product_id;
+                    delete variant.inventory_item_id;
                     return variant;
             });
             copy.id = result.copyId;
             await copy.save({ update: true });
 
+            // Update inventory
+
+            // First get a list of updated inventory item IDs and quantities.
+
+            const updatedIds = new_product.variants.map(variant => variant.inventory_item_id);
+            const updatedQuantities = new_product.variants.map(variant => variant.inventory_quantity);
+            const otherIds = (isOriginal ? copy : original).variants.map(variant => variant.inventory_item_id);
+
+            // Now use the InventoryLevel in the REST API to update the quantity of the other inventory items.
+
+            // First we need to add the locations to the inventoryInfo
+
+            const locationsResponse = await shopify.api.rest.Location.all({ session: session });
+            const locations = locationsResponse.data.map(location => location.id) || [];
+            const inventoryItemsResponse = await shopify.api.rest.InventoryLevel.all({ session: session, location_ids: locations.join(",") });
+
+            const itemsAndLocations = {};
+            inventoryItemsResponse.data
+                .filter(item => otherIds.includes(item.inventory_item_id))
+                .forEach(item => {
+                    itemsAndLocations[item.inventory_item_id] = item.location_id;
+                });
+
+            const queries = updatedIds.map((id, index) => ({
+                originalId: id,
+                updatedId: otherIds[index],
+                locationId: itemsAndLocations[otherIds[index]],
+                quantity: updatedQuantities[index],
+            }));
+
+            // Now call the API
+
+            const levelClient = new shopify.api.rest.InventoryLevel({ session: session });
+            queries.forEach(async query => {
+                await levelClient.set({
+                    body: {
+                        inventory_item_id: query.updatedId,
+                        location_id: query.locationId,
+                        available: query.quantity,
+                    }
+                });
+            });
+
             // Take the product that was updated, and using GraphQL, ensure both products' categories match
             
             const gqlClient = new shopify.api.clients.Graphql({ session });
 
-                // Get the category
+            // Get the category
 
             const categoryResponse = await gqlClient.query({
                 data: {
@@ -228,7 +277,7 @@ export default {
                 },
             });
 
-                // Update the category for the other product
+            // Update the category for the other product
 
             const category = categoryResponse.body.data.product.productCategory;
             const categoryInput = category ? { productTaxonomyNodeId: category.productTaxonomyNode.id } : null;
