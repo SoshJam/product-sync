@@ -14,8 +14,6 @@ import {
     ImageMajor
 } from '@shopify/polaris-icons';
 
-import dayjs from "dayjs";
-
 export function SyncedProductsList({ products, loading, stopSync }) {
     const [ shopUrl, setShopUrl ] = useState("");
     const fetch = useAuthenticatedFetch();
@@ -62,7 +60,7 @@ export function SyncedProductsList({ products, loading, stopSync }) {
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-                {dayjs(updated).format("MMMM D, YYYY")}
+                {formatDate(new Date(updated))}
             </IndexTable.Cell>
 
             <IndexTable.Cell>
@@ -97,4 +95,12 @@ export function SyncedProductsList({ products, loading, stopSync }) {
 /* A function to truncate long strings */
 function truncate(str, n) {
     return str.length > n ? str.substr(0, n - 1) + "…" : str;
-  }
+}
+
+/* A function to format a date */
+function formatDate(date) {
+    const monthName = date.toLocaleString("default", { month: "long" });
+    const day = date.getDate();
+    const year = date.getFullYear();
+    return `${monthName} ${day}, ${year}`;
+}

@@ -59,12 +59,5 @@ export default defineConfig({
       "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
     },
-  },
-  build: {
-    rollupOptions: {
-      external: [
-        "dayjs"
-      ]
-    }
   }
 });
