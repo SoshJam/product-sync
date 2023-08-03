@@ -169,7 +169,7 @@ export default {
                 new_product.tags = new_product.tags.replace(", ProductSync Copy", "");
                 new_product.tags = new_product.tags.replace("ProductSync Copy", "");
 
-                new_product.title = new_product.title.replace(" (ProductSync Copy)", "");
+                new_product.title = new_product.title.replace(" (ProductSync Copy)", ""); // Legacy
 
                 new_product.variants.forEach(variant => {
                     variant.price = variant.price / priceMultiplier;
@@ -206,7 +206,7 @@ export default {
 
             const copy = new shopify.api.rest.Product({ session: session });
             Object.assign(copy, differences);
-            if (differences.title || !copy.title?.includes("(ProductSync Copy)")) copy.title = new_product.title + " (ProductSync Copy)";
+            // if (differences.title || !copy.title?.includes("(ProductSync Copy)")) copy.title = new_product.title + " (ProductSync Copy)";
             if (differences.tags || !copy.tags?.includes("ProductSync Copy")) copy.tags = new_product.tags.length > 0 ? new_product.tags + ", ProductSync Copy" : "ProductSync Copy";
             if (differences.variants) 
                 differences.variants = differences.variants.map(variant => {
