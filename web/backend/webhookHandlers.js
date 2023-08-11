@@ -294,6 +294,24 @@ export default {
                 },
             });
 
+            // Set each product's Counterpart metafield to the other product's ID.
+
+            // const original_metafield = new shopify.api.rest.Metafield({ session: session });
+            // original_metafield.product_id = result.productId;
+            // original_metafield.namespace = "productsync";
+            // original_metafield.key = "counterpart";
+            // original_metafield.value = "gid://shopify/Product/" + result.copyId;
+            // original_metafield.type = "product_reference";
+            // await original_metafield.save({ update: true });
+
+            // const copy_metafield = new shopify.api.rest.Metafield({ session: session });
+            // copy_metafield.product_id = result.copyId;
+            // copy_metafield.namespace = "productsync";
+            // copy_metafield.key = "counterpart";
+            // copy_metafield.value = "gid://shopify/Product/" + result.productId;
+            // copy_metafield.type = "product_reference";
+            // await copy_metafield.save({ update: true });
+
             // Update the cached product data in the database
 
             await UpdateDocument({
