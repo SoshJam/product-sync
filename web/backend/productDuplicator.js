@@ -45,7 +45,7 @@ export async function productDuplicator(product, session) {
             query: DUPLICATE_PRODUCT_QUERY,
             variables: {
                 id: productIdString,
-                // title: product.title + " (ProductSync Copy)",
+                title: product.title, // + " (ProductSync Copy)",
             },
         },
     });
