@@ -148,8 +148,8 @@ export default {
             }
 
             // If we synced this product within the last 5 seconds, ignore this webhook.
-            if ((searchOriginals[0] || searchCopies[0]).lastSynced > new Date(Date.now() - 5000)) {
-                console.log("This product was synced within the last 5 seconds. Ignoring webhook.");
+            if ((searchOriginals[0] || searchCopies[0]).lastSynced > new Date(Date.now() - 10000)) {
+                console.log("This product was synced within the last 10 seconds. Ignoring webhook.");
                 return;
             }
 
@@ -253,6 +253,7 @@ export default {
 
             const levelClient = new shopify.api.rest.InventoryLevel({ session: session });
             queries.forEach(async query => {
+                if (query.locationId == undefined || query.locationId == null) return;
                 await levelClient.set({
                     body: {
                         inventory_item_id: query.updatedId,
@@ -268,31 +269,31 @@ export default {
 
             // Get the category
 
-            // const categoryResponse = await gqlClient.query({
-            //     data: {
-            //         query: GET_CATEGORY_QUERY,
-            //         variables: {
-            //             id: "gid://shopify/Product/" + updatedId,
-            //         },
-            //     },
-            // });
+            const categoryResponse = await gqlClient.query({
+                data: {
+                    query: GET_CATEGORY_QUERY,
+                    variables: {
+                        id: "gid://shopify/Product/" + updatedId,
+                    },
+                },
+            });
 
-            // // Update the category for the other product
+            // Update the category for the other product
 
-            // const category = categoryResponse.body.data.product.productCategory;
-            // const categoryInput = category ? { productTaxonomyNodeId: category.productTaxonomyNode.id } : null;
+            const category = categoryResponse.body.data.product.productCategory;
+            const categoryInput = category ? { productTaxonomyNodeId: category.productTaxonomyNode.id } : null;
 
-            // await gqlClient.query({
-            //     data: {
-            //         query: UPDATE_CATEGORY_MUTATION,
-            //         variables: {
-            //             input: {
-            //                 id: "gid://shopify/Product/" + otherId,
-            //                 productCategory: categoryInput,
-            //             }
-            //         },
-            //     },
-            // });
+            await gqlClient.query({
+                data: {
+                    query: UPDATE_CATEGORY_MUTATION,
+                    variables: {
+                        input: {
+                            id: "gid://shopify/Product/" + otherId,
+                            productCategory: categoryInput,
+                        }
+                    },
+                },
+            });
 
             // Set each product's Counterpart metafield to the other product's ID.
 
