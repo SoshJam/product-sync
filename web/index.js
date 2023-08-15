@@ -151,6 +151,8 @@ app.get("/api/database/get/:id", async (_req, res) => {
   res.status(status).send({ success: status === 200, error, result });
 });
 
+// Endpoint for deleting a product from the database and Shopify
+
 app.delete("/api/database/delete/:id", async (_req, res) => {
   let status = 200;
   let error = null;
@@ -194,6 +196,56 @@ app.delete("/api/database/delete/:id", async (_req, res) => {
   
   res.status(status).send({ success: status === 200, error });
 });
+
+// Endpoint for deleting ALL products from the database and Shopify
+
+app.delete("/api/database/delete-all", async (_req, res) => {
+  let status = 200;
+  let error = null;
+  let search;
+
+  try {
+
+    // First search the database and get the ids of the duplicates
+
+    search = await SearchDatabase({
+      databaseName: "ProductSync",
+      collectionName: res.locals.shopify.session.shop,
+      query: {}
+    });
+
+    const copyIds = search.map((product) => product.copyId);
+
+    if (!copyIds) throw new Error("Could not get copyIds.");
+
+    // Then delete the records in the database
+
+    DeleteDocument({
+      databaseName: "ProductSync",
+      collectionName: res.locals.shopify.session.shop,
+      query: {}
+    });
+
+    // And delete the duplicate products in Shopify
+
+    copyIds.forEach((copyId) => {
+      shopify.api.rest.Product.delete({
+        session: res.locals.shopify.session,
+        id: copyId,
+      });
+    });
+
+  }
+
+  catch (e) {
+    status = 500;
+    error = e.message;
+  }
+
+  res.status(status).send({ success: status === 200, error });
+});
+
+// Endpoint for inserting a product into the database and Shopify
 
 app.post("/api/database/insert", async (_req, res) => {
   let status = 200;

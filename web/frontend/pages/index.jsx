@@ -10,6 +10,7 @@ import {
     SkeletonBodyText,
     EmptyState,
     Toast,
+    Button,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
@@ -63,6 +64,18 @@ export default function HomePage() {
             });
     }, [deleting]);
 
+    // Stop syncing all products
+    const stopSyncingAllProducts = useCallback(() => {
+        if (!confirm("Are you sure you want to stop syncing all products?")) return;
+        setDeleting(true);
+        fetch("/api/database/delete-all", { method: "DELETE" })
+            .then((response) => {
+                setToastProps({ content: "Stopped syncing all products." })
+                refreshProducts();
+                setDeleting(false);
+            });
+    }, [deleting]);
+
     // Page contents
     const loadingMarkup = loading &&
         <LegacyCard sectioned>
@@ -84,12 +97,17 @@ export default function HomePage() {
             </EmptyState>
         </LegacyCard>;
 
-    const tableMarkup = !loading && products?.length ? 
+    const tableMarkup = !loading && products?.length ? <>
         <SyncedProductsList 
             products={products}
             loading={loading}
             stopSync={stopSync}
-        /> : null;
+        />
+        <br />
+        <Button plain destructive onClick={stopSyncingAllProducts}>
+            Stop Syncing All Products
+        </Button>
+        </> : null;
 
     const toastMarkup = toastProps.content && !loading && (
         <Toast {...toastProps} onDismiss={() => setToastProps(emptyToastProps)} />
