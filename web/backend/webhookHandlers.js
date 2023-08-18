@@ -125,6 +125,8 @@ export default {
 
             const session = await GetSession({ shop });
 
+            console.log("Searching for product in database...");
+
             const searchOriginals = await SearchDatabase({
                 databaseName: "ProductSync",
                 collectionName: shop,
@@ -136,6 +138,8 @@ export default {
                 collectionName: shop,
                 query: { copyId: updatedId }
             });
+
+            console.log("Evaluating search results...");
 
             // If either has more than 1 result or both have 1 result, there's a duplicate in the database.
             if ((searchOriginals.length > 1 || searchCopies.length > 1) || (searchOriginals.length === 1 && searchCopies.length === 1))
@@ -163,6 +167,8 @@ export default {
 
             const old_product = normalizeProduct(old_data);
             const new_product = normalizeProduct(payload);
+
+            console.log("Normalizing product data...");
             
             // If the copy was updated, modify the data to look like it's the original
             if (!isOriginal) {
@@ -192,12 +198,16 @@ export default {
                 delete variant.product_id;
             });
 
+            console.log("Calculating differences...");
+
             // Get what was changed
             const differences = jsonDiff(old_product, new_product);
 
             // If nothing was changed, ignore this webhook.
             if (differences.length === 0)
                 return;
+
+            console.log("Updating products...");
 
             // Update the original
 
@@ -222,6 +232,8 @@ export default {
             });
             copy.id = result.copyId;
             await copy.save({ update: true });
+
+            console.log("Updating inventory...");
 
             // Update inventory
 
@@ -271,6 +283,8 @@ export default {
                 });
             });
 
+            console.log("Updating categories...");
+
             // Take the product that was updated, and using GraphQL, ensure both products' categories match
             
             const gqlClient = new shopify.api.clients.Graphql({ session });
@@ -303,6 +317,8 @@ export default {
                 },
             });
 
+            console.log("Updating metafields...");
+
             // Set each product's Counterpart metafield to the other product's ID.
 
             const original_metafield = new shopify.api.rest.Metafield({ session: session });
@@ -320,6 +336,8 @@ export default {
             copy_metafield.value = "gid://shopify/Product/" + result.productId;
             copy_metafield.type = "product_reference";
             copy_metafield.save({ update: true });
+            
+            console.log("Updating database...");
 
             // Update the cached product data in the database
 
