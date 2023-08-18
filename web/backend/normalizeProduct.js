@@ -37,17 +37,17 @@ export function normalizeProduct( product ) {
     normalized.title = product.title;
     normalized.vendor = product.vendor;
 
-    normalized.images = product.images.map((image) => ({
-        id: image.id ? (typeof(image.id) == "number" ? image.id : parseInt(image.id.split("/").pop(), 10)) : undefined,
-        product_id: image.product_id,
-        position: image.position,
-        created_at: image.created_at,
-        updated_at: image.updated_at,
-        width: image.width,
-        height: image.height,
-        src: image.src,
-        variant_ids: image.variant_ids,
-    }));
+    // normalized.images = product.images.map((image) => ({
+    //     id: image.id ? (typeof(image.id) == "number" ? image.id : parseInt(image.id.split("/").pop(), 10)) : undefined,
+    //     product_id: image.product_id,
+    //     position: image.position,
+    //     created_at: image.created_at,
+    //     updated_at: image.updated_at,
+    //     width: image.width,
+    //     height: image.height,
+    //     src: image.src,
+    //     variant_ids: image.variant_ids,
+    // }));
 
     normalized.options = product.options.map((option) => ({
         id: option.id ? (typeof(option.id) == "number" ? option.id : parseInt(option.id.split("/").pop(), 10)) : undefined,
