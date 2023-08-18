@@ -15,7 +15,7 @@ const billingConfig = {
     interval: BillingInterval.OneTime,
   },
 };
-shs
+
 const shopify = shshopiopifyApp({
   api: {
     apiVersion: LATEST_API_VERSION,
