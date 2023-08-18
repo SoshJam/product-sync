@@ -183,6 +183,8 @@ export default {
             }
 
             // Remove images. We can't sync the images or else problems will occur.
+            // But we still save the images into the database to display in the app.
+            const productImages = new_product.images;
             delete old_product.images;
             delete new_product.images;
 
@@ -338,6 +340,9 @@ export default {
             copy_metafield.save({ update: true });
             
             console.log("Updating database...");
+
+            // Put the images back
+            new_product.images = productImages || [];
 
             // Update the cached product data in the database
 
