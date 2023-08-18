@@ -176,10 +176,14 @@ export default {
                 });
             }
 
-            // Delete all the IDs so we can compare the objects
-            new_product.images.forEach(image => {
-                delete image.id;
-            });
+            // Remove images. We can't sync the images or else problems will occur.
+            delete old_product.images;
+            delete new_product.images;
+
+            // // Delete all the IDs so we can compare the objects
+            // new_product.images.forEach(image => {
+            //     delete image.id;
+            // });
             new_product.options.forEach(option => {
                 delete option.id;
             });
@@ -253,7 +257,11 @@ export default {
 
             const levelClient = new shopify.api.rest.InventoryLevel({ session: session });
             queries.forEach(async query => {
-                if (query.locationId == undefined || query.locationId == null) return;
+                if (!query.locationId) {
+                    console.log("NO LOCATION ID:");
+                    console.log(query);
+                    return
+                };
                 await levelClient.set({
                     body: {
                         inventory_item_id: query.updatedId,
@@ -283,7 +291,7 @@ export default {
             const category = categoryResponse.body.data.product.productCategory;
             const categoryInput = category ? { productTaxonomyNodeId: category.productTaxonomyNode.id } : null;
 
-            await gqlClient.query({
+            gqlClient.query({
                 data: {
                     query: UPDATE_CATEGORY_MUTATION,
                     variables: {
@@ -303,7 +311,7 @@ export default {
             original_metafield.key = "counterpart";
             original_metafield.value = "gid://shopify/Product/" + result.copyId;
             original_metafield.type = "product_reference";
-            await original_metafield.save({ update: true });
+            original_metafield.save({ update: true });
 
             const copy_metafield = new shopify.api.rest.Metafield({ session: session });
             copy_metafield.product_id = result.copyId;
@@ -311,11 +319,11 @@ export default {
             copy_metafield.key = "counterpart";
             copy_metafield.value = "gid://shopify/Product/" + result.productId;
             copy_metafield.type = "product_reference";
-            await copy_metafield.save({ update: true });
+            copy_metafield.save({ update: true });
 
             // Update the cached product data in the database
 
-            await UpdateDocument({
+            UpdateDocument({
                 databaseName: "ProductSync",
                 collectionName: shop,
                 query: (isOriginal ? { productId: updatedId } : { copyId: updatedId }),
