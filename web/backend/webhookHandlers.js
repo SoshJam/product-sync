@@ -169,29 +169,26 @@ export default {
             const new_product = normalizeProduct(payload);
 
             console.log("Normalizing product data...");
+
+            // Remove the wholesale tag if it exists (we will add it back later, but only to the copy)
+            new_product.tags = new_product.tags.replace(", Wholesale Copy", "");
+            new_product.tags = new_product.tags.replace("Wholesale Copy", "");
             
-            // If the copy was updated, modify the data to look like it's the original
+            // If the copy was updated, modify the prices to look like it's the original
             if (!isOriginal) {
-                new_product.tags = new_product.tags.replace(", ProductSync Copy", "");
-                new_product.tags = new_product.tags.replace("ProductSync Copy", "");
-
-                new_product.title = new_product.title.replace(" (ProductSync Copy)", ""); // Legacy
-
                 new_product.variants.forEach(variant => {
                     variant.price = variant.price / priceMultiplier;
                 });
             }
 
             // Remove images. We can't sync the images or else problems will occur.
+            // (images being overwritten)
             // But we still save the images into the database to display in the app.
             const productImages = new_product.images;
             delete old_product.images;
             delete new_product.images;
 
-            // // Delete all the IDs so we can compare the objects
-            // new_product.images.forEach(image => {
-            //     delete image.id;
-            // });
+            // Delete all the IDs so we can compare the objects
             new_product.options.forEach(option => {
                 delete option.id;
             });
@@ -205,6 +202,9 @@ export default {
             // Get what was changed
             const differences = jsonDiff(old_product, new_product);
 
+            // Ensure the differences contain the tags
+            if (!differences.tags) differences.tags = new_product.tags;
+
             // If nothing was changed, ignore this webhook.
             if (differences.length === 0)
                 return;
@@ -215,6 +215,7 @@ export default {
 
             const original = new shopify.api.rest.Product({ session: session });
             Object.assign(original, differences);
+            if (original.tags?.includes("Wholesale Copy")) original.tags = original.tags.replace(", Wholesale Copy", "").replace("Wholesale Copy", ""); // remove either instance of the tag
             original.id = result.productId;
             await original.save({ update: true });
 
@@ -222,8 +223,7 @@ export default {
 
             const copy = new shopify.api.rest.Product({ session: session });
             Object.assign(copy, differences);
-            // if (differences.title || !copy.title?.includes("(ProductSync Copy)")) copy.title = new_product.title + " (ProductSync Copy)";
-            if (differences.tags || !copy.tags?.includes("ProductSync Copy")) copy.tags = new_product.tags.length > 0 ? new_product.tags + ", ProductSync Copy" : "ProductSync Copy";
+            if (differences.tags || !copy.tags?.includes("Wholesale Copy")) copy.tags = new_product.tags.length > 0 ? new_product.tags + ", Wholesale Copy" : "Wholesale Copy";
             if (differences.variants) 
                 differences.variants = differences.variants.map(variant => {
                     variant.price = variant.price * priceMultiplier;
@@ -241,8 +241,8 @@ export default {
 
             // First get a list of updated inventory item IDs and quantities.
 
-            const updatedIds = new_product.variants.map(variant => variant.inventory_item_id);
-            const updatedQuantities = new_product.variants.map(variant => variant.inventory_quantity);
+            const updatedIds = (isOriginal ? original : copy).variants.map(variant => variant.inventory_item_id);
+            const updatedQuantities = (isOriginal ? original : copy).variants.map(variant => variant.inventory_quantity || 0);
             const otherIds = (isOriginal ? copy : original).variants.map(variant => variant.inventory_item_id);
 
             // Now use the InventoryLevel in the REST API to update the quantity of the other inventory items.
@@ -263,7 +263,7 @@ export default {
             const queries = updatedIds.map((id, index) => ({
                 originalId: id,
                 updatedId: otherIds[index],
-                locationId: itemsAndLocations[otherIds[index]],
+                locationId: itemsAndLocations[otherIds[index]] || locations[0] || undefined,
                 quantity: updatedQuantities[index],
             }));
 
