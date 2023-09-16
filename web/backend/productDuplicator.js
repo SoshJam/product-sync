@@ -45,7 +45,7 @@ export async function productDuplicator(product, session) {
             query: DUPLICATE_PRODUCT_QUERY,
             variables: {
                 id: productIdString,
-                title: product.title, // + " (ProductSync Copy)",
+                title: product.title,
             },
         },
     });
@@ -63,7 +63,7 @@ export async function productDuplicator(product, session) {
         variant.price = variant.price * priceMultiplier;
         return variant;
     });
-    updatedDuplicate.tags = oldDuplicate.tags.length > 0 ? oldDuplicate.tags + ", ProductSync Copy" : "ProductSync Copy";
+    updatedDuplicate.tags = oldDuplicate.tags.length > 0 ? oldDuplicate.tags + ", Wholesale Copy" : "Wholesale Copy";
 
     await updatedDuplicate.save();
 
