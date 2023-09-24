@@ -29,3 +29,4 @@ web/database.sqlite
 
 # Fly.io configuration
 fly.toml
+flyctl deploy command
