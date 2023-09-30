@@ -17,7 +17,7 @@ const convertWeightUnit = (weightUnit) => {
  * Given a product, return a normalized version of it according to the schema
  * that is outlined in the Shopify API documentation.
  * 
- * https://shopify.dev/docs/api/admin-rest/2023-04/resources/product#resource-object
+ * https://shopify.dev/docs/api/admin-rest/2023-07/resources/product#resource-object
  * 
  * @param product The product data that will be normalized
  * @returns       The normalized product data
