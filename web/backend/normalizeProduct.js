@@ -67,7 +67,7 @@ export function normalizeProduct( product ) {
         weight_unit: convertWeightUnit((variant.weight_unit || variant.weightUnit).toLowerCase()),
         id: variant.id ? (typeof(variant.id) == "number" ? variant.id : parseInt(variant.id.split("/").pop(), 10)) : undefined,
         inventory_item_id: variant.inventory_item_id || (variant.inventoryItem?.id ? parseInt(variant.inventoryItem.id.split("/").pop(), 10) : undefined) || undefined,
-        inventory_management: (variant.inventory_management || variant.inventoryManagement).toLowerCase(),
+        inventory_management: (variant.inventory_management || variant.inventoryManagement)?.toLowerCase() || undefined,
         inventory_policy: (variant.inventory_policy || variant.inventoryPolicy).toLowerCase(),
         inventory_quantity: variant.inventory_quantity || variant.inventoryQuantity,
         option1: variant.option1 || variant.selectedOptions?.[0]?.value,

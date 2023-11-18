@@ -21,7 +21,7 @@ export default {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
-            console.log(`Received webhook: ${topic} - ${webhookId}`);
+            console.log(`[product-sync/webhook/INFO] Received webhook: ${topic} - ${webhookId}`);
         },
     },
 
@@ -37,7 +37,7 @@ export default {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
-            console.log(`Received webhook: ${topic} - ${webhookId}`);
+            console.log(`[product-sync/webhook/INFO] Received webhook: ${topic} - ${webhookId}`);
         },
     },
 
@@ -56,7 +56,7 @@ export default {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
-            console.log(`Received webhook: ${topic} - ${webhookId}`);
+            console.log(`[product-sync/webhook/INFO] Received webhook: ${topic} - ${webhookId}`);
 
             // Delete the collection of synced products specific to this store
             await DropCollection({
@@ -89,11 +89,11 @@ export default {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
-            console.log(`Received webhook: ${topic} - ${webhookId}`);
+            console.log(`[product-sync/webhook/INFO] Received webhook: ${topic} - ${webhookId}`);
             const payload = JSON.parse(body);
             const session = await GetSession({ shop });
 
-            productUpdater(shop, session, payload);
+            productUpdater(shop, session, payload, (msg) => console.log("[product-sync/update/INFO] " + msg));
         },
     },
 
@@ -108,7 +108,7 @@ export default {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
         callback: async (topic, shop, body, webhookId) => {
-            console.log(`Received webhook: ${topic} - ${webhookId}`);
+            console.log(`[product-sync/webhook/INFO] Received webhook: ${topic} - ${webhookId}`);
             const payload = JSON.parse(body);
             
             const productId = payload.id;

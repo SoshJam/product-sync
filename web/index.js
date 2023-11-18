@@ -20,7 +20,7 @@ const app = express();
 // Set up Shopify authentication and webhook handling
 
 const saveSession = async (req, res, next) => {
-  console.log("Saving session.");
+  console.log("[product-sync/INFO] Saving session.");
 
   const session = res.locals.shopify.session;
   session.isOnline = true;
@@ -46,7 +46,7 @@ const saveSession = async (req, res, next) => {
 };
 
 const createWebhooks = async (_req, res, next) => {
-  console.log("Creating webhooks...");
+  console.log("[product-sync/INFO] Creating webhooks...");
 
   const address = `${process.env.HOST}/api/webhooks`;
   const requiredSubscriptions = [
@@ -74,7 +74,7 @@ const createWebhooks = async (_req, res, next) => {
     }
   });
 
-  console.log(Math.max(0, requiredSubscriptions.length - existingSubscriptions.length) + " webhooks created for address " + address + ".");
+  console.log("[product-sync/INFO]  " + Math.max(0, requiredSubscriptions.length - existingSubscriptions.length) + " webhooks created for address " + address + ".");
 
   return next();
 }
@@ -252,11 +252,13 @@ app.post("/api/database/insert", async (_req, res) => {
   let errors = [];
   const products = _req.body.products;
   var results = [];
+  var failures = [];
   
   try {
     // Must use a for loop here because we need to await the result of each call to productDuplicator
     for (let i = 0; i < products.length; i++) {
-      results[i] = await productDuplicator(products[i], res.locals.shopify.session);
+      console.log("[product-sync/duplicate/INFO] Duplicating product " + products[i].id.split("/")[4] + " on Shopify..." + (products[i].title? " (" + products[i].title + ")" : ""));
+      results[i] = await productDuplicator(products[i], res.locals.shopify.session, (failure) => failures.push(failure));
     }
   }
 
@@ -264,6 +266,9 @@ app.post("/api/database/insert", async (_req, res) => {
     status = 500;
     errors.push(e.message);
   }
+
+  console.log("[product-sync/duplicate/WARN] " + failures.length + " products failed to duplicate:");
+  failures.forEach((failure) => console.log("[product-sync/duplicate/WARN] - " + failure));
 
   res.status(status).send({ success: status === 200, errors, results });
 });

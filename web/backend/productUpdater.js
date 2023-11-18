@@ -36,11 +36,13 @@ const priceMultiplier = 0.5;
 /**
  * Updates a product
  */
-export async function productUpdater(shop, session, payload) {
+export async function productUpdater(shop, session, payload, logger) {
+
+    try {
 
     const updatedId = payload.id;
 
-    console.log("Searching for product in database...");
+    logger("Searching for product in database...");
 
     const searchOriginals = await SearchDatabase({
         databaseName: "ProductSync",
@@ -54,7 +56,7 @@ export async function productUpdater(shop, session, payload) {
         query: { copyId: updatedId }
     });
 
-    console.log("Evaluating search results...");
+    logger("Evaluating search results...");
 
     // If either has more than 1 result or both have 1 result, there's a duplicate in the database.
     if ((searchOriginals.length > 1 || searchCopies.length > 1) || (searchOriginals.length === 1 && searchCopies.length === 1))
@@ -62,20 +64,20 @@ export async function productUpdater(shop, session, payload) {
 
     // If both have 0 results, we aren't syncing this product.
     if (searchOriginals.length === 0 && searchCopies.length === 0) {
-        console.log("This product is not being synced. Ignoring webhook.");
+        logger("This product is not being synced. Ignoring webhook.");
         return;
     }
 
     // If we synced this product within the last 5 seconds, ignore this webhook.
     if ((searchOriginals[0] || searchCopies[0]).lastSynced > new Date(Date.now() - 10000)) {
-        console.log("This product was synced within the last 10 seconds. Ignoring webhook.");
+        logger("This product was synced within the last 10 seconds. Ignoring webhook.");
         return;
     }
 
     // Now we know that either the original or the copy has 1 result.
     
     const isOriginal = searchOriginals.length === 1;
-    console.log(isOriginal ? "The updated project is the original." : "The updated product is the copy.")
+    logger(isOriginal ? "The updated project is the original." : "The updated product is the copy.")
     const result = isOriginal ? searchOriginals[0] : searchCopies[0];
     const otherId = isOriginal ? result.copyId : result.productId;
     const old_data = result.cachedProductData;
@@ -83,7 +85,7 @@ export async function productUpdater(shop, session, payload) {
     const old_product = normalizeProduct(old_data);
     const new_product = normalizeProduct(payload);
 
-    console.log("Normalizing product data...");
+    logger("Normalizing product data...");
 
     // Remove the wholesale tag if it exists (we will add it back later, but only to the copy)
     new_product.tags = new_product.tags.replace(", Wholesale Copy", "");
@@ -112,7 +114,7 @@ export async function productUpdater(shop, session, payload) {
         delete variant.product_id;
     });
 
-    console.log("Calculating differences...");
+    logger("Calculating differences...");
 
     // Get what was changed
     const differences = jsonDiff(old_product, new_product);
@@ -124,7 +126,7 @@ export async function productUpdater(shop, session, payload) {
     if (differences.length === 0)
         return;
 
-    console.log("Updating products...");
+    logger("Updating products...");
 
     // Update the original
 
@@ -150,7 +152,7 @@ export async function productUpdater(shop, session, payload) {
     copy.id = result.copyId;
     await copy.save({ update: true });
 
-    console.log("Updating inventory...");
+    logger("Updating inventory...");
 
     // Update inventory
 
@@ -187,8 +189,8 @@ export async function productUpdater(shop, session, payload) {
     const levelClient = new shopify.api.rest.InventoryLevel({ session: session });
     queries.forEach(async query => {
         if (!query.locationId) {
-            console.log("NO LOCATION ID:");
-            console.log(query);
+            logger("NO LOCATION ID:");
+            logger(query);
             return
         };
         await levelClient.set({
@@ -200,7 +202,7 @@ export async function productUpdater(shop, session, payload) {
         });
     });
 
-    console.log("Updating categories...");
+    logger("Updating categories...");
 
     // Take the product that was updated, and using GraphQL, ensure both products' categories match
     
@@ -234,7 +236,7 @@ export async function productUpdater(shop, session, payload) {
         },
     });
 
-    console.log("Updating metafields...");
+    logger("Updating metafields...");
 
     // Set each product's Counterpart metafield to the other product's ID.
 
@@ -254,7 +256,7 @@ export async function productUpdater(shop, session, payload) {
     copy_metafield.type = "product_reference";
     copy_metafield.save({ update: true });
     
-    console.log("Updating database...");
+    logger("Updating database...");
 
     // Put the images back
     new_product.images = productImages || [];
@@ -270,4 +272,8 @@ export async function productUpdater(shop, session, payload) {
             lastSynced: new Date(), 
         }
     });
+
+    } catch (e) {
+        logger("Error updating product:" + e.message);
+    }
 }

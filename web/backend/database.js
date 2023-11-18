@@ -123,7 +123,7 @@ export async function DropCollection( { databaseName, collectionName } ) {
 
         const result = await collection.drop((error, deleted) => {
             if (error) throw error;
-            if (deleted) console.log(`Dropped collection ${collectionName}`);
+            if (deleted) console.log(`[product-sync/db/INFO] Dropped collection ${collectionName}`);
         });
         return result;
     }

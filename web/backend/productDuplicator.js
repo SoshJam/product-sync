@@ -11,7 +11,9 @@ const DUPLICATE_PRODUCT_QUERY = `
     }
 `;
 
-export async function productDuplicator(product, session) {
+export async function productDuplicator(product, session, duplicateFailureCallback) {
+
+    try {
 
     const priceMultiplier = 0.5;
     const gqlClient = new shopify.api.clients.Graphql({ session });
@@ -49,6 +51,10 @@ export async function productDuplicator(product, session) {
             },
         },
     });
+
+    console.log("[product-sync/duplicate/INFO] Waiting for product to be ready...")
+    await new Promise(resolve => setTimeout(resolve, 10000)); // wait to make sure the product can finish duplicating, just using await is occasionally not enough for large stores
+    console.log("[product-sync/duplicate/INFO] Product should be ready to modify.")
 
     const copyIdString = duplicateProductResponse.body.data.productDuplicate.newProduct.id;
     const copyId = parseInt(copyIdString.split("/").pop(), 10);
@@ -100,4 +106,9 @@ export async function productDuplicator(product, session) {
     });
 
     return output;
+
+    } catch (e) {
+        console.log("[product-sync/duplicate/ERROR] Error duplicating product: " + e.message);
+        duplicateFailureCallback(product.id + ": " + product.title);
+    }
 }
