@@ -104,9 +104,9 @@ export default function HomePage() {
             stopSync={stopSync}
         />
         <br />
-        <Button plain destructive onClick={stopSyncingAllProducts}>
+        {/* <Button plain destructive onClick={stopSyncingAllProducts}>
             Stop Syncing All Products
-        </Button>
+        </Button> */}
         </> : null;
 
     const toastMarkup = toastProps.content && !loading && (
